@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
@@ -12,19 +12,18 @@
       <header>
         <h1>TaskFlow Gratuit</h1>
         <p>
-          Gérez vos tâches et leur historique depuis n'importe quel ordinateur grâce
-          à une base cloud gratuite (Supabase).
+          Gerez vos taches et leur historique depuis n'importe quel ordinateur grace
+          a une base cloud gratuite (Supabase).
         </p>
-        <button id="configureBtn" class="secondary">Configurer Supabase</button>
       </header>
 
       <section class="card">
-        <h2>Nouvelle tâche</h2>
+        <h2>Nouvelle tache</h2>
         <form id="taskForm">
           <input
             id="taskInput"
             type="text"
-            placeholder="Ex: Vérifier les sauvegardes"
+            placeholder="Ex: Verifier les sauvegardes"
             maxlength="120"
             required
           />
@@ -33,36 +32,17 @@
       </section>
 
       <section class="card">
-        <h2>Tâches en cours</h2>
+        <h2>Taches en cours</h2>
         <ul id="pendingTasks" class="task-list"></ul>
       </section>
 
       <section class="card">
-        <h2>Historique des tâches acquittées</h2>
+        <h2>Historique des taches acquittees</h2>
         <ul id="historyTasks" class="task-list"></ul>
       </section>
 
       <p id="status" aria-live="polite"></p>
     </main>
-
-    <dialog id="configDialog">
-      <form method="dialog" id="configForm" class="config-form">
-        <h3>Configuration Supabase</h3>
-        <p>Copiez les valeurs depuis votre projet Supabase (gratuit).</p>
-        <label>
-          URL du projet
-          <input id="urlInput" type="url" placeholder="https://xxxx.supabase.co" required />
-        </label>
-        <label>
-          Clé publique (anon)
-          <textarea id="keyInput" rows="3" required></textarea>
-        </label>
-        <menu>
-          <button value="cancel" class="secondary">Annuler</button>
-          <button id="saveConfigBtn" value="default">Sauvegarder</button>
-        </menu>
-      </form>
-    </dialog>
 
     <script src="app.js"></script>
   </body>

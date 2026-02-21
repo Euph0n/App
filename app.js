@@ -1,25 +1,13 @@
-const statusEl = document.getElementById("status");
+﻿const statusEl = document.getElementById("status");
 const taskForm = document.getElementById("taskForm");
 const taskInput = document.getElementById("taskInput");
 const pendingTasksEl = document.getElementById("pendingTasks");
 const historyTasksEl = document.getElementById("historyTasks");
-const configDialog = document.getElementById("configDialog");
-const configForm = document.getElementById("configForm");
-const configureBtn = document.getElementById("configureBtn");
 
 let supabaseClient;
 
-function getConfig() {
-  return {
-    url: localStorage.getItem("supabase_url") || "",
-    key: localStorage.getItem("supabase_key") || "",
-  };
-}
-
-function saveConfig(url, key) {
-  localStorage.setItem("supabase_url", url);
-  localStorage.setItem("supabase_key", key);
-}
+const SUPABASE_URL = "https://pikgsutwilxhblphynax.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpa2dzdXR3aWx4aGJscGh5bmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NjY1NDcsImV4cCI6MjA4NzI0MjU0N30.gCPo21F6gpAGokux0CfgR_JDNHBr8vGOtiFdF6mQ4qY";
 
 function setStatus(message, isError = false) {
   statusEl.textContent = message;
@@ -38,9 +26,9 @@ function renderTask(task, history = false) {
   item.className = "task-item";
 
   const content = document.createElement("div");
-  content.innerHTML = `<strong>${task.title}</strong><div class="task-meta">Créée le ${formatDate(
+  content.innerHTML = `<strong>${task.title}</strong><div class="task-meta">Creee le ${formatDate(
     task.created_at
-  )}${history ? ` • Acquittée le ${formatDate(task.completed_at)}` : ""}</div>`;
+  )}${history ? ` - Acquittee le ${formatDate(task.completed_at)}` : ""}</div>`;
 
   item.appendChild(content);
 
@@ -56,7 +44,7 @@ function renderTask(task, history = false) {
 
 async function fetchTasks() {
   if (!supabaseClient) {
-    setStatus("Configurez Supabase pour commencer.", true);
+    setStatus("Connexion Supabase non initialisee.", true);
     return;
   }
 
@@ -80,7 +68,7 @@ async function fetchTasks() {
   history.forEach((task) => historyTasksEl.appendChild(renderTask(task, true)));
 
   if (!pending.length) {
-    pendingTasksEl.innerHTML = "<li>Aucune tâche en cours.</li>";
+    pendingTasksEl.innerHTML = "<li>Aucune tache en cours.</li>";
   }
 
   if (!history.length) {
@@ -99,7 +87,7 @@ async function addTask(title) {
     return;
   }
 
-  setStatus("Tâche ajoutée.");
+  setStatus("Tache ajoutee.");
   await fetchTasks();
 }
 
@@ -114,37 +102,27 @@ async function acknowledgeTask(id) {
     return;
   }
 
-  setStatus("Tâche acquittée.");
+  setStatus("Tache acquittee.");
   await fetchTasks();
 }
 
 function initSupabase() {
-  const { url, key } = getConfig();
-  if (!url || !key) {
-    setStatus("Cliquez sur 'Configurer Supabase' pour connecter la base.", true);
+  if (
+    !SUPABASE_URL ||
+    SUPABASE_URL.includes("xxxx.supabase.co") ||
+    !SUPABASE_ANON_KEY ||
+    SUPABASE_ANON_KEY === "your-anon-public-key"
+  ) {
+    setStatus(
+      "Renseignez SUPABASE_URL et SUPABASE_ANON_KEY dans app.js pour connecter la base.",
+      true
+    );
     return;
   }
 
-  supabaseClient = window.supabase.createClient(url, key);
-  setStatus("Connexion Supabase prête.");
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   fetchTasks();
 }
-
-configureBtn.addEventListener("click", () => {
-  const { url, key } = getConfig();
-  document.getElementById("urlInput").value = url;
-  document.getElementById("keyInput").value = key;
-  configDialog.showModal();
-});
-
-configForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const url = document.getElementById("urlInput").value.trim();
-  const key = document.getElementById("keyInput").value.trim();
-  saveConfig(url, key);
-  configDialog.close();
-  initSupabase();
-});
 
 taskForm.addEventListener("submit", async (event) => {
   event.preventDefault();

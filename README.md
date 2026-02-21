@@ -1,21 +1,21 @@
-# TaskFlow Gratuit (gestion de tâches)
+﻿# TaskFlow Gratuit (gestion de taches)
 
-Cette application répond au besoin :
-- lister des tâches,
+Cette application repond au besoin :
+- lister des taches,
 - les acquitter,
 - conserver un historique accessible depuis n'importe quel ordinateur.
 
 ## Stack 100% gratuite
 
 - **Front-end**: HTML/CSS/JS statique.
-- **Base de données cloud**: **Supabase** (plan gratuit).
-- **Hébergement**: GitHub Pages / Netlify / Vercel (gratuits).
+- **Base de donnees cloud**: **Supabase** (plan gratuit).
+- **Hebergement**: GitHub Pages / Netlify / Vercel (gratuits).
 
-## 1) Créer la base Supabase
+## 1) Creer la base Supabase
 
-1. Créez un compte gratuit sur https://supabase.com
-2. Créez un projet.
-3. Dans l'éditeur SQL, exécutez:
+1. Creez un compte gratuit sur https://supabase.com
+2. Creez un projet.
+3. Dans l'editeur SQL, executez:
 
 ```sql
 create table if not exists public.tasks (
@@ -42,20 +42,25 @@ using (true)
 with check (true);
 ```
 
-> Option simple: tout le monde avec l'URL du site peut lire/écrire. Si vous voulez sécuriser, ajoutez une authentification Supabase ensuite.
+> Option simple: tout le monde avec l'URL du site peut lire/ecrire. Si vous voulez securiser, ajoutez une authentification Supabase ensuite.
 
-## 2) Configurer l'application
+## 2) Configurer l'application (fixe dans le code)
 
-1. Ouvrez le site.
-2. Cliquez sur **Configurer Supabase**.
-3. Renseignez:
-   - l'URL du projet (`Project URL`),
-   - la clé publique (`anon public key`).
+1. Ouvrez `app.js`.
+2. Renseignez les constantes :
+   - `SUPABASE_URL`
+   - `SUPABASE_ANON_KEY`
+3. Rechargez la page.
 
-Ces valeurs sont sauvegardées dans le navigateur local (`localStorage`).
+Exemple:
 
-## 3) Déployer gratuitement
+```js
+const SUPABASE_URL = "https://xxxx.supabase.co";
+const SUPABASE_ANON_KEY = "eyJ...";
+```
+
+## 3) Deployer gratuitement
 
 - Poussez ce dossier sur GitHub.
-- Activez GitHub Pages (ou connectez le repo à Netlify/Vercel).
-- Votre historique sera partagé entre appareils car les données sont dans Supabase (cloud).
+- Activez GitHub Pages (ou connectez le repo a Netlify/Vercel).
+- Votre historique sera partage entre appareils car les donnees sont dans Supabase (cloud).
