@@ -1,0 +1,105 @@
+:root {
+  color-scheme: light dark;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+.app {
+  max-width: 760px;
+  margin: 2rem auto;
+  padding: 0 1rem 2rem;
+}
+
+header h1 {
+  margin-bottom: 0.25rem;
+}
+
+.card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+form,
+menu {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+input,
+textarea,
+button {
+  border-radius: 8px;
+  border: 1px solid #475569;
+  padding: 0.6rem 0.8rem;
+  font: inherit;
+}
+
+input,
+textarea {
+  background: #0f172a;
+  color: #f8fafc;
+  flex: 1;
+}
+
+button {
+  background: #22c55e;
+  color: #052e16;
+  border: 0;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+button.secondary {
+  background: #334155;
+  color: #f8fafc;
+}
+
+.task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.task-item {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.task-meta {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+#status {
+  margin-top: 1rem;
+  min-height: 1.5rem;
+}
+
+dialog {
+  border: none;
+  border-radius: 12px;
+  max-width: 620px;
+  width: calc(100% - 2rem);
+}
+
+.config-form {
+  display: grid;
+  gap: 0.8rem;
+}
