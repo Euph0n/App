@@ -1,0 +1,9 @@
+{
+  "name": "task-manager-shared",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Gestionnaire de taches partage avec historique serveur",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

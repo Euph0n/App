@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestionnaire de taches</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="hero">
+      <h1>Gestionnaire de taches</h1>
+      <p>Listez vos taches, acquittez-les, et gardez un historique centralise.</p>
+      <p id="status-text" class="status">Connexion au serveur...</p>
+    </header>
+
+    <section class="card">
+      <form id="task-form" class="task-form">
+        <label for="task-input">Nouvelle tache</label>
+        <div class="task-form-row">
+          <input id="task-input" name="task" type="text" maxlength="140" placeholder="Ex: Envoyer le rapport hebdo" required />
+          <button type="submit">Ajouter</button>
+        </div>
+      </form>
+
+      <div class="toolbar">
+        <button data-filter="all" class="filter-btn active">Toutes</button>
+        <button data-filter="active" class="filter-btn">A faire</button>
+        <button data-filter="done" class="filter-btn">Acquittees</button>
+      </div>
+
+      <ul id="task-list" class="task-list" aria-live="polite"></ul>
+
+      <footer class="summary">
+        <span id="summary-text"></span>
+        <button id="clear-done" type="button" class="danger">Supprimer les acquittees</button>
+      </footer>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
