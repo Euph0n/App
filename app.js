@@ -1,10 +1,14 @@
 ﻿const statusEl = document.getElementById("status");
+const authStateEl = document.getElementById("authState");
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
 const taskForm = document.getElementById("taskForm");
 const taskInput = document.getElementById("taskInput");
 const pendingTasksEl = document.getElementById("pendingTasks");
 const historyTasksEl = document.getElementById("historyTasks");
 
 let supabaseClient;
+let currentUser = null;
 
 const SUPABASE_URL = "https://pikgsutwilxhblphynax.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpa2dzdXR3aWx4aGJscGh5bmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NjY1NDcsImV4cCI6MjA4NzI0MjU0N30.gCPo21F6gpAGokux0CfgR_JDNHBr8vGOtiFdF6mQ4qY";
@@ -12,6 +16,19 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 function setStatus(message, isError = false) {
   statusEl.textContent = message;
   statusEl.style.color = isError ? "#fca5a5" : "#86efac";
+}
+
+function setTaskInputEnabled(enabled) {
+  taskInput.disabled = !enabled;
+  const submitButton = taskForm.querySelector("button[type='submit']");
+  if (submitButton) {
+    submitButton.disabled = !enabled;
+  }
+}
+
+function resetTaskLists(message) {
+  pendingTasksEl.innerHTML = `<li>${message}</li>`;
+  historyTasksEl.innerHTML = `<li>${message}</li>`;
 }
 
 function formatDate(value) {
@@ -42,19 +59,25 @@ function renderTask(task, history = false) {
   return item;
 }
 
+function authDbHint(operation) {
+  return `${operation}: verifiez que la table tasks contient user_id (uuid) et que les policies RLS sont configurees pour auth.uid().`;
+}
+
 async function fetchTasks() {
-  if (!supabaseClient) {
-    setStatus("Connexion Supabase non initialisee.", true);
+  if (!supabaseClient || !currentUser) {
+    resetTaskLists("Connectez-vous pour voir vos taches.");
     return;
   }
 
   const { data, error } = await supabaseClient
     .from("tasks")
-    .select("id,title,status,created_at,completed_at")
+    .select("id,title,status,created_at,completed_at,user_id")
+    .eq("user_id", currentUser.id)
     .order("created_at", { ascending: false });
 
   if (error) {
-    setStatus(`Erreur de lecture: ${error.message}`, true);
+    const needsUserColumn = error.message && error.message.toLowerCase().includes("user_id");
+    setStatus(needsUserColumn ? authDbHint("Erreur de lecture") : `Erreur de lecture: ${error.message}`, true);
     return;
   }
 
@@ -77,13 +100,20 @@ async function fetchTasks() {
 }
 
 async function addTask(title) {
+  if (!currentUser) {
+    setStatus("Connectez-vous avant d'ajouter une tache.", true);
+    return;
+  }
+
   const { error } = await supabaseClient.from("tasks").insert({
     title,
     status: "pending",
+    user_id: currentUser.id,
   });
 
   if (error) {
-    setStatus(`Erreur d'ajout: ${error.message}`, true);
+    const needsUserColumn = error.message && error.message.toLowerCase().includes("user_id");
+    setStatus(needsUserColumn ? authDbHint("Erreur d'ajout") : `Erreur d'ajout: ${error.message}`, true);
     return;
   }
 
@@ -92,10 +122,16 @@ async function addTask(title) {
 }
 
 async function acknowledgeTask(id) {
+  if (!currentUser) {
+    setStatus("Session invalide. Reconnectez-vous.", true);
+    return;
+  }
+
   const { error } = await supabaseClient
     .from("tasks")
     .update({ status: "done", completed_at: new Date().toISOString() })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("user_id", currentUser.id);
 
   if (error) {
     setStatus(`Erreur d'acquittement: ${error.message}`, true);
@@ -106,7 +142,50 @@ async function acknowledgeTask(id) {
   await fetchTasks();
 }
 
-function initSupabase() {
+async function signInWithGoogle() {
+  const redirectTo = `${window.location.origin}${window.location.pathname}`;
+  const { error } = await supabaseClient.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo },
+  });
+
+  if (error) {
+    setStatus(`Erreur de connexion Google: ${error.message}`, true);
+  }
+}
+
+async function signOut() {
+  const { error } = await supabaseClient.auth.signOut();
+  if (error) {
+    setStatus(`Erreur de deconnexion: ${error.message}`, true);
+    return;
+  }
+
+  setStatus("Session fermee.");
+}
+
+async function handleSession(session) {
+  currentUser = session?.user ?? null;
+
+  if (!currentUser) {
+    authStateEl.textContent = "Non connecte.";
+    loginBtn.hidden = false;
+    logoutBtn.hidden = true;
+    setTaskInputEnabled(false);
+    resetTaskLists("Connectez-vous pour voir vos taches.");
+    return;
+  }
+
+  const identity = currentUser.email || currentUser.user_metadata?.full_name || currentUser.id;
+  authStateEl.textContent = `Connecte: ${identity}`;
+  loginBtn.hidden = true;
+  logoutBtn.hidden = false;
+  setTaskInputEnabled(true);
+
+  await fetchTasks();
+}
+
+async function initSupabase() {
   if (
     !SUPABASE_URL ||
     SUPABASE_URL.includes("xxxx.supabase.co") ||
@@ -121,13 +200,41 @@ function initSupabase() {
   }
 
   supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  fetchTasks();
+
+  const { data, error } = await supabaseClient.auth.getSession();
+  if (error) {
+    setStatus(`Erreur de session: ${error.message}`, true);
+    return;
+  }
+
+  await handleSession(data.session);
+
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    void handleSession(session);
+  });
 }
+
+loginBtn.addEventListener("click", () => {
+  if (!supabaseClient) {
+    setStatus("Client Supabase indisponible.", true);
+    return;
+  }
+
+  void signInWithGoogle();
+});
+
+logoutBtn.addEventListener("click", () => {
+  if (!supabaseClient) {
+    return;
+  }
+
+  void signOut();
+});
 
 taskForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const title = taskInput.value.trim();
-  if (!title || !supabaseClient) {
+  if (!title || !supabaseClient || !currentUser) {
     return;
   }
 
@@ -135,4 +242,6 @@ taskForm.addEventListener("submit", async (event) => {
   taskInput.value = "";
 });
 
-initSupabase();
+setTaskInputEnabled(false);
+resetTaskLists("Connectez-vous pour voir vos taches.");
+void initSupabase();

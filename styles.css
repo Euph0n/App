@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   color-scheme: light dark;
   font-family: Inter, system-ui, sans-serif;
 }
@@ -28,7 +28,8 @@ header h1 {
 }
 
 form,
-menu {
+menu,
+.auth-row {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
@@ -63,6 +64,16 @@ button.secondary {
   color: #f8fafc;
 }
 
+button[hidden] {
+  display: none;
+}
+
+button:disabled,
+input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .task-list {
   list-style: none;
   padding: 0;
@@ -90,16 +101,4 @@ button.secondary {
 #status {
   margin-top: 1rem;
   min-height: 1.5rem;
-}
-
-dialog {
-  border: none;
-  border-radius: 12px;
-  max-width: 620px;
-  width: calc(100% - 2rem);
-}
-
-.config-form {
-  display: grid;
-  gap: 0.8rem;
 }

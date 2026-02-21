@@ -1,9 +1,9 @@
 ﻿# TaskFlow Gratuit (gestion de taches)
 
-Cette application repond au besoin :
+Cette application permet de :
 - lister des taches,
 - les acquitter,
-- conserver un historique accessible depuis n'importe quel ordinateur.
+- conserver un historique par utilisateur (connexion Google).
 
 ## Stack 100% gratuite
 
@@ -11,56 +11,66 @@ Cette application repond au besoin :
 - **Base de donnees cloud**: **Supabase** (plan gratuit).
 - **Hebergement**: GitHub Pages / Netlify / Vercel (gratuits).
 
-## 1) Creer la base Supabase
+## 1) Configurer la base et la securite (RLS)
 
-1. Creez un compte gratuit sur https://supabase.com
-2. Creez un projet.
-3. Dans l'editeur SQL, executez:
+Dans Supabase > SQL Editor, executez :
 
 ```sql
 create table if not exists public.tasks (
   id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
   title text not null,
   status text not null default 'pending' check (status in ('pending', 'done')),
   created_at timestamptz not null default now(),
   completed_at timestamptz
 );
 
+create index if not exists tasks_user_id_idx on public.tasks(user_id);
+
 alter table public.tasks enable row level security;
 
-create policy "Public read tasks"
+drop policy if exists "Users can read own tasks" on public.tasks;
+drop policy if exists "Users can insert own tasks" on public.tasks;
+drop policy if exists "Users can update own tasks" on public.tasks;
+
+create policy "Users can read own tasks"
 on public.tasks for select
-using (true);
+using (auth.uid() = user_id);
 
-create policy "Public insert tasks"
+create policy "Users can insert own tasks"
 on public.tasks for insert
-with check (true);
+with check (auth.uid() = user_id);
 
-create policy "Public update tasks"
+create policy "Users can update own tasks"
 on public.tasks for update
-using (true)
-with check (true);
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
 ```
 
-> Option simple: tout le monde avec l'URL du site peut lire/ecrire. Si vous voulez securiser, ajoutez une authentification Supabase ensuite.
+## 2) Activer la connexion Google
 
-## 2) Configurer l'application (fixe dans le code)
+1. Dans Supabase, ouvrez `Authentication > Providers > Google`.
+2. Creez un OAuth Client Google dans Google Cloud Console.
+3. Dans Google Cloud, ajoutez cette URI de redirection autorisee :
+   - `https://<PROJECT_REF>.supabase.co/auth/v1/callback`
+4. Copiez `Client ID` et `Client Secret` dans Supabase (provider Google).
+5. Dans Supabase `Authentication > URL Configuration` :
+   - `Site URL` = URL de ton site (ex: GitHub Pages)
+   - `Redirect URLs` = URL de ton site (et URL locale si besoin)
 
-1. Ouvrez `app.js`.
-2. Renseignez les constantes :
-   - `SUPABASE_URL`
-   - `SUPABASE_ANON_KEY`
-3. Rechargez la page.
+## 3) Configurer l'application
 
-Exemple:
+Dans `app.js`, renseignez :
 
 ```js
 const SUPABASE_URL = "https://xxxx.supabase.co";
 const SUPABASE_ANON_KEY = "eyJ...";
 ```
 
-## 3) Deployer gratuitement
+La `anon key` est publique cote front. Ne jamais exposer la `service_role key`.
+
+## 4) Deployer gratuitement
 
 - Poussez ce dossier sur GitHub.
 - Activez GitHub Pages (ou connectez le repo a Netlify/Vercel).
-- Votre historique sera partage entre appareils car les donnees sont dans Supabase (cloud).
+- Connectez-vous avec Google depuis le site deploye.
