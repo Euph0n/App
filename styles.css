@@ -102,3 +102,9 @@ input:disabled {
   margin-top: 1rem;
   min-height: 1.5rem;
 }
+
+@media (display-mode: standalone) {
+  #installBtn {
+    display: none;
+  }
+}

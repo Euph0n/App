@@ -74,3 +74,9 @@ La `anon key` est publique cote front. Ne jamais exposer la `service_role key`.
 - Poussez ce dossier sur GitHub.
 - Activez GitHub Pages (ou connectez le repo a Netlify/Vercel).
 - Connectez-vous avec Google depuis le site deploye.
+
+## 5) Installer comme web app (PWA)
+
+- Ouvrez le site sur Chrome/Edge.
+- Cliquez sur `Installer l'app` (ou via le menu du navigateur).
+- L'application s'ouvre ensuite comme une app autonome (sans barre d'onglets).

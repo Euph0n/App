@@ -2,6 +2,7 @@
 const authStateEl = document.getElementById("authState");
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
+const installBtn = document.getElementById("installBtn");
 const taskForm = document.getElementById("taskForm");
 const taskInput = document.getElementById("taskInput");
 const pendingTasksEl = document.getElementById("pendingTasks");
@@ -9,6 +10,7 @@ const historyTasksEl = document.getElementById("historyTasks");
 
 let supabaseClient;
 let currentUser = null;
+let deferredInstallPrompt = null;
 
 const SUPABASE_URL = "https://pikgsutwilxhblphynax.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpa2dzdXR3aWx4aGJscGh5bmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NjY1NDcsImV4cCI6MjA4NzI0MjU0N30.gCPo21F6gpAGokux0CfgR_JDNHBr8vGOtiFdF6mQ4qY";
@@ -231,6 +233,35 @@ logoutBtn.addEventListener("click", () => {
   void signOut();
 });
 
+if (installBtn) {
+  installBtn.addEventListener("click", async () => {
+    if (!deferredInstallPrompt) {
+      setStatus("Installation non disponible sur ce navigateur.");
+      return;
+    }
+
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    installBtn.hidden = true;
+  });
+}
+
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  if (installBtn) {
+    installBtn.hidden = false;
+  }
+});
+
+window.addEventListener("appinstalled", () => {
+  deferredInstallPrompt = null;
+  if (installBtn) {
+    installBtn.hidden = true;
+  }
+});
+
 taskForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const title = taskInput.value.trim();
@@ -245,3 +276,11 @@ taskForm.addEventListener("submit", async (event) => {
 setTaskInputEnabled(false);
 resetTaskLists("Connectez-vous pour voir vos taches.");
 void initSupabase();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(() => {
+      setStatus("Service worker non disponible.", true);
+    });
+  });
+}
