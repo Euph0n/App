@@ -78,7 +78,7 @@ function setDetailsToggleState(button, open) {
   button.innerHTML = getDetailsToggleIcon(open);
 }
 
-function setupSwipeToAcknowledge(item, taskId) {
+function setupSwipeActions(item, taskId, canAcknowledge) {
   const minSwipeDistance = 90;
   const maxSwipeDistance = 140;
   let isDragging = false;
@@ -125,7 +125,7 @@ function setupSwipeToAcknowledge(item, taskId) {
     offsetX = Math.max(Math.min(deltaX, maxSwipeDistance), -maxSwipeDistance);
 
     setOffset(offsetX);
-    if (offsetX >= minSwipeDistance) {
+    if (canAcknowledge && offsetX >= minSwipeDistance) {
       item.classList.add("swipe-ready-ack");
       item.classList.remove("swipe-ready-delete");
     } else if (offsetX <= -minSwipeDistance) {
@@ -142,7 +142,7 @@ function setupSwipeToAcknowledge(item, taskId) {
       return;
     }
 
-    const shouldAcknowledge = offsetX >= minSwipeDistance;
+    const shouldAcknowledge = canAcknowledge && offsetX >= minSwipeDistance;
     const shouldDelete = offsetX <= -minSwipeDistance;
 
     if (shouldAcknowledge) {
@@ -202,7 +202,10 @@ function renderTask(task) {
 
   if (!isDone) {
     item.classList.add("task-item-pending");
-    setupSwipeToAcknowledge(item, task.id);
+    setupSwipeActions(item, task.id, true);
+  } else {
+    item.classList.add("task-item-done");
+    setupSwipeActions(item, task.id, false);
   }
 
   const detailsPanel = document.createElement("div");
