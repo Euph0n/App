@@ -33,7 +33,7 @@ function setAddTaskEnabled(enabled) {
 }
 
 function resetTaskTable(message) {
-  taskTableBodyEl.innerHTML = `<tr><td class="task-empty" colspan="3">${message}</td></tr>`;
+  taskTableBodyEl.innerHTML = `<tr><td class="task-empty" colspan="2">${message}</td></tr>`;
 }
 
 function applyFilterButtonState() {
@@ -78,6 +78,90 @@ function setDetailsToggleState(button, open) {
   button.innerHTML = getDetailsToggleIcon(open);
 }
 
+function setupSwipeToAcknowledge(row, taskId) {
+  const minSwipeDistance = 90;
+  const maxSwipeDistance = 140;
+  let isDragging = false;
+  let pointerId = null;
+  let startX = 0;
+  let offsetX = 0;
+
+  const setOffset = (value) => {
+    row.style.setProperty("--swipe-offset", `${value}px`);
+  };
+
+  const resetSwipeState = () => {
+    row.classList.remove("swipe-active");
+    row.classList.remove("swipe-ready");
+    setOffset(0);
+    offsetX = 0;
+    isDragging = false;
+    pointerId = null;
+  };
+
+  row.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0) {
+      return;
+    }
+    if (event.target instanceof Element && event.target.closest("button")) {
+      return;
+    }
+
+    isDragging = true;
+    pointerId = event.pointerId;
+    startX = event.clientX;
+    offsetX = 0;
+    row.classList.add("swipe-active");
+    row.setPointerCapture(event.pointerId);
+  });
+
+  row.addEventListener("pointermove", (event) => {
+    if (!isDragging || event.pointerId !== pointerId) {
+      return;
+    }
+
+    const deltaX = event.clientX - startX;
+    if (deltaX >= 0) {
+      offsetX = 0;
+    } else {
+      offsetX = Math.max(deltaX, -maxSwipeDistance);
+    }
+
+    setOffset(offsetX);
+    if (Math.abs(offsetX) >= minSwipeDistance) {
+      row.classList.add("swipe-ready");
+    } else {
+      row.classList.remove("swipe-ready");
+    }
+  });
+
+  row.addEventListener("pointerup", async (event) => {
+    if (!isDragging || event.pointerId !== pointerId) {
+      return;
+    }
+
+    const shouldAcknowledge = Math.abs(offsetX) >= minSwipeDistance;
+    if (shouldAcknowledge) {
+      row.classList.remove("swipe-active");
+      row.classList.remove("swipe-ready");
+      setOffset(-maxSwipeDistance);
+      isDragging = false;
+      pointerId = null;
+      await acknowledgeTask(taskId);
+      return;
+    }
+
+    resetSwipeState();
+  });
+
+  row.addEventListener("pointercancel", () => {
+    if (!isDragging) {
+      return;
+    }
+    resetSwipeState();
+  });
+}
+
 function renderTask(task) {
   const fragment = document.createDocumentFragment();
   const row = document.createElement("tr");
@@ -98,43 +182,10 @@ function renderTask(task) {
   setDetailsToggleState(detailsToggleBtn, false);
   detailsToggleCell.appendChild(detailsToggleBtn);
   row.appendChild(detailsToggleCell);
-
-  const actionCell = document.createElement("td");
-  actionCell.className = "task-action-cell";
-
   if (!isDone) {
-    const button = document.createElement("button");
-    button.className = "icon-btn";
-    button.setAttribute("aria-label", "Acquitter la tache");
-    button.title = "Acquitter";
-    button.innerHTML = `
-      <svg
-        class="action-icon"
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        width="18"
-        height="18"
-        aria-hidden="true"
-      >
-        <path
-          fill="currentColor"
-          d="M9.55 18.2 4.8 13.45a1 1 0 1 1 1.4-1.42l3.35 3.35 8.25-8.25a1 1 0 1 1 1.4 1.41l-8.95 8.96a1 1 0 0 1-1.4 0z"
-        />
-      </svg>
-    `;
-    button.addEventListener("click", () => acknowledgeTask(task.id));
-    actionCell.appendChild(button);
-  } else {
-    const doneCheckbox = document.createElement("input");
-    doneCheckbox.type = "checkbox";
-    doneCheckbox.checked = true;
-    doneCheckbox.disabled = true;
-    doneCheckbox.className = "task-done-checkbox";
-    doneCheckbox.setAttribute("aria-label", "Tache acquittee");
-    actionCell.appendChild(doneCheckbox);
+    row.classList.add("task-row-pending");
+    setupSwipeToAcknowledge(row, task.id);
   }
-
-  row.appendChild(actionCell);
 
   const detailsRow = document.createElement("tr");
   detailsRow.id = detailsId;
@@ -143,7 +194,7 @@ function renderTask(task) {
 
   const detailsCell = document.createElement("td");
   detailsCell.className = "task-details-cell";
-  detailsCell.colSpan = 3;
+  detailsCell.colSpan = 2;
   const createdAt = formatDate(task.created_at);
   const completedAt = isDone && task.completed_at ? formatDate(task.completed_at) : "Non acquittee";
   detailsCell.innerHTML = `<div class="task-details-content"><div><strong>Creee le:</strong> ${createdAt}</div><div><strong>Acquittee le:</strong> ${completedAt}</div></div>`;
