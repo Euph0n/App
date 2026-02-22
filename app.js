@@ -66,6 +66,19 @@ function authDbHint(operation) {
   return `${operation}: verifiez que la table tasks contient user_id (uuid) et que les policies RLS sont configurees pour auth.uid().`;
 }
 
+function readOAuthErrorFromUrl() {
+  const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : "";
+  const searchPart = window.location.search.startsWith("?") ? window.location.search.slice(1) : "";
+  const params = new URLSearchParams(hash || searchPart);
+  const errorDescription = params.get("error_description");
+  const error = params.get("error");
+
+  if (errorDescription || error) {
+    return decodeURIComponent(errorDescription || error);
+  }
+  return "";
+}
+
 function showAuthOverlay() {
   if (!authOverlay || !authOverlay.hidden) {
     return;
@@ -202,6 +215,26 @@ async function handleSession(session) {
   await fetchTasks();
 }
 
+async function refreshSessionFromStorage(force = false) {
+  if (!supabaseClient) {
+    return;
+  }
+
+  const { data, error } = await supabaseClient.auth.getSession();
+  if (error) {
+    setStatus(`Erreur de session: ${error.message}`, true);
+    return;
+  }
+
+  const nextUserId = data.session?.user?.id || null;
+  const currentUserId = currentUser?.id || null;
+  if (force || nextUserId !== currentUserId) {
+    await handleSession(data.session);
+  } else if (nextUserId && authOverlay && !authOverlay.hidden) {
+    closeAuthOverlay();
+  }
+}
+
 async function initSupabase() {
   if (
     !SUPABASE_URL ||
@@ -218,13 +251,12 @@ async function initSupabase() {
 
   supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  const { data, error } = await supabaseClient.auth.getSession();
-  if (error) {
-    setStatus(`Erreur de session: ${error.message}`, true);
-    return;
+  const oauthError = readOAuthErrorFromUrl();
+  if (oauthError) {
+    setStatus(`Erreur OAuth: ${oauthError}`, true);
   }
 
-  await handleSession(data.session);
+  await refreshSessionFromStorage(true);
 
   supabaseClient.auth.onAuthStateChange((_event, session) => {
     void handleSession(session);
@@ -291,6 +323,16 @@ taskForm.addEventListener("submit", async (event) => {
 setTaskInputEnabled(false);
 resetTaskLists("Connectez-vous pour voir vos taches.");
 void initSupabase();
+
+window.addEventListener("focus", () => {
+  void refreshSessionFromStorage();
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    void refreshSessionFromStorage();
+  }
+});
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
