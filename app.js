@@ -7,6 +7,7 @@ const installBtn = document.getElementById("installBtn");
 const authOverlay = document.getElementById("authOverlay");
 const addTaskBtn = document.getElementById("addTaskBtn");
 const toggleHistoryBtn = document.getElementById("toggleHistoryBtn");
+const pendingSectionEl = document.getElementById("pendingSection");
 const pendingTasksEl = document.getElementById("pendingTasks");
 const historySectionEl = document.getElementById("historySection");
 const historyTasksEl = document.getElementById("historyTasks");
@@ -31,10 +32,11 @@ function setAddTaskEnabled(enabled) {
 }
 
 function setHistoryVisible(visible) {
-  if (!historySectionEl || !toggleHistoryBtn) {
+  if (!historySectionEl || !toggleHistoryBtn || !pendingSectionEl) {
     return;
   }
 
+  pendingSectionEl.hidden = visible;
   historySectionEl.hidden = !visible;
   toggleHistoryBtn.setAttribute("aria-expanded", String(visible));
   const label = visible ? "Masquer historique" : "Afficher historique";
