@@ -14,15 +14,20 @@
   </head>
   <body>
     <main class="app">
-      <header>
-        <h1>Gestionnaire de taches</h1>
-      </header>
-
       <section class="task-workspace">
         <div class="section-head">
           <h2>Gestionnaire de taches</h2>
           <div class="section-actions">
             <button id="addTaskBtn" type="button" class="add-task-btn" aria-label="Ajouter une tache">+</button>
+            <button
+              id="toggleHistoryBtn"
+              type="button"
+              class="secondary history-toggle-btn"
+              aria-controls="historySection"
+              aria-expanded="false"
+            >
+              Historique
+            </button>
             <details id="settingsMenu" class="settings-menu" hidden>
               <summary class="secondary settings-trigger" aria-label="Parametres">
                 <svg
@@ -49,8 +54,10 @@
         </div>
         <h3 class="list-title">Taches en cours</h3>
         <ul id="pendingTasks" class="task-list"></ul>
-        <h3 class="list-title">Historique des taches acquittees</h3>
-        <ul id="historyTasks" class="task-list"></ul>
+        <div id="historySection" class="history-section" hidden>
+          <h3 class="list-title">Historique des taches acquittees</h3>
+          <ul id="historyTasks" class="task-list"></ul>
+        </div>
       </section>
 
       <p id="status" aria-live="polite"></p>

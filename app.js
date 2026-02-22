@@ -6,7 +6,9 @@ const accountInfoEl = document.getElementById("accountInfo");
 const installBtn = document.getElementById("installBtn");
 const authOverlay = document.getElementById("authOverlay");
 const addTaskBtn = document.getElementById("addTaskBtn");
+const toggleHistoryBtn = document.getElementById("toggleHistoryBtn");
 const pendingTasksEl = document.getElementById("pendingTasks");
+const historySectionEl = document.getElementById("historySection");
 const historyTasksEl = document.getElementById("historyTasks");
 
 let supabaseClient;
@@ -26,6 +28,16 @@ function setAddTaskEnabled(enabled) {
     return;
   }
   addTaskBtn.disabled = !enabled;
+}
+
+function setHistoryVisible(visible) {
+  if (!historySectionEl || !toggleHistoryBtn) {
+    return;
+  }
+
+  historySectionEl.hidden = !visible;
+  toggleHistoryBtn.setAttribute("aria-expanded", String(visible));
+  toggleHistoryBtn.textContent = visible ? "Masquer historique" : "Historique";
 }
 
 function resetTaskLists(message) {
@@ -378,7 +390,15 @@ if (addTaskBtn) {
   });
 }
 
+if (toggleHistoryBtn) {
+  toggleHistoryBtn.addEventListener("click", () => {
+    const shouldShow = historySectionEl ? historySectionEl.hidden : true;
+    setHistoryVisible(shouldShow);
+  });
+}
+
 setAddTaskEnabled(false);
+setHistoryVisible(false);
 resetTaskLists("Connectez-vous pour voir vos taches.");
 void initSupabase();
 
