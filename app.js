@@ -262,13 +262,13 @@ function setDetailsToggleState(button, open) {
 }
 
 function setupSwipeActions(item, taskId, canAcknowledge, onTap) {
-  const minSwipeDistance = 90;
-  const maxSwipeDistance = 140;
+  const minSwipeDistance = 45;
+  const maxSwipeDistance = 120;
   const tapThreshold = 8;
   let isDragging = false;
-  let pointerId = null;
   let startX = 0;
   let offsetX = 0;
+  let activePointerId = null;
 
   const setOffset = (value) => {
     item.style.setProperty("--swipe-offset", `${value}px`);
@@ -281,31 +281,11 @@ function setupSwipeActions(item, taskId, canAcknowledge, onTap) {
     setOffset(0);
     offsetX = 0;
     isDragging = false;
-    pointerId = null;
+    activePointerId = null;
   };
 
-  item.addEventListener("pointerdown", (event) => {
-    if (event.button !== 0) {
-      return;
-    }
-    if (event.target instanceof Element && event.target.closest("button")) {
-      return;
-    }
-
-    isDragging = true;
-    pointerId = event.pointerId;
-    startX = event.clientX;
-    offsetX = 0;
-    item.classList.add("swipe-active");
-    item.setPointerCapture(event.pointerId);
-  });
-
-  item.addEventListener("pointermove", (event) => {
-    if (!isDragging || event.pointerId !== pointerId) {
-      return;
-    }
-
-    const deltaX = event.clientX - startX;
+  const updateOffset = (clientX) => {
+    const deltaX = clientX - startX;
     offsetX = Math.max(Math.min(deltaX, maxSwipeDistance), -maxSwipeDistance);
 
     setOffset(offsetX);
@@ -319,13 +299,9 @@ function setupSwipeActions(item, taskId, canAcknowledge, onTap) {
       item.classList.remove("swipe-ready-ack");
       item.classList.remove("swipe-ready-delete");
     }
-  });
+  };
 
-  item.addEventListener("pointerup", async (event) => {
-    if (!isDragging || event.pointerId !== pointerId) {
-      return;
-    }
-
+  const finishSwipe = async () => {
     const shouldAcknowledge = canAcknowledge && offsetX >= minSwipeDistance;
     const shouldDelete = offsetX <= -minSwipeDistance;
 
@@ -335,7 +311,7 @@ function setupSwipeActions(item, taskId, canAcknowledge, onTap) {
       item.classList.remove("swipe-ready-delete");
       setOffset(maxSwipeDistance);
       isDragging = false;
-      pointerId = null;
+      activePointerId = null;
       await acknowledgeTask(taskId);
       return;
     }
@@ -346,7 +322,7 @@ function setupSwipeActions(item, taskId, canAcknowledge, onTap) {
       item.classList.remove("swipe-ready-delete");
       setOffset(-maxSwipeDistance);
       isDragging = false;
-      pointerId = null;
+      activePointerId = null;
       await deleteTask(taskId);
       return;
     }
@@ -355,13 +331,69 @@ function setupSwipeActions(item, taskId, canAcknowledge, onTap) {
       onTap();
     }
     resetSwipeState();
-  });
+  };
 
-  item.addEventListener("pointercancel", () => {
-    if (!isDragging) {
+  const stopTracking = () => {
+    item.removeEventListener("pointermove", handlePointerMove);
+    item.removeEventListener("pointerup", handlePointerUp);
+    item.removeEventListener("pointercancel", handlePointerCancel);
+  };
+
+  const handlePointerMove = (event) => {
+    if (!isDragging || event.pointerId !== activePointerId) {
       return;
     }
+    updateOffset(event.clientX);
+    if (Math.abs(offsetX) > 6) {
+      event.preventDefault();
+    }
+  };
+
+  const handlePointerUp = async (event) => {
+    if (!isDragging || event.pointerId !== activePointerId) {
+      return;
+    }
+    item.releasePointerCapture(event.pointerId);
+    stopTracking();
+    await finishSwipe();
+  };
+
+  const handlePointerCancel = (event) => {
+    if (!isDragging || event.pointerId !== activePointerId) {
+      return;
+    }
+    item.releasePointerCapture(event.pointerId);
+    stopTracking();
     resetSwipeState();
+  };
+
+  const beginDrag = (event) => {
+    isDragging = true;
+    activePointerId = event.pointerId;
+    startX = event.clientX;
+    offsetX = 0;
+    item.classList.add("swipe-active");
+    item.setPointerCapture(event.pointerId);
+    item.addEventListener("pointermove", handlePointerMove);
+    item.addEventListener("pointerup", handlePointerUp);
+    item.addEventListener("pointercancel", handlePointerCancel);
+  };
+
+  item.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0 && event.pointerType !== "touch") {
+      return;
+    }
+    if (event.target instanceof Element && event.target.closest("button")) {
+      return;
+    }
+    if (isDragging) {
+      return;
+    }
+    beginDrag(event);
+  });
+
+  item.addEventListener("dragstart", (event) => {
+    event.preventDefault();
   });
 }
 
@@ -755,9 +787,15 @@ async function deleteTask(id) {
     return;
   }
 
+  const previousTasks = allTasks;
+  allTasks = allTasks.filter((task) => task.id !== id);
+  renderFilteredTasks();
+
   const { error } = await supabaseClient.from("tasks").delete().eq("id", id).eq("user_id", currentUser.id);
 
   if (error) {
+    allTasks = previousTasks;
+    renderFilteredTasks();
     setStatus(`Erreur de suppression: ${error.message}`, true);
     return;
   }
