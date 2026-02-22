@@ -5,8 +5,7 @@ const settingsMenu = document.getElementById("settingsMenu");
 const accountInfoEl = document.getElementById("accountInfo");
 const installBtn = document.getElementById("installBtn");
 const authOverlay = document.getElementById("authOverlay");
-const taskForm = document.getElementById("taskForm");
-const taskInput = document.getElementById("taskInput");
+const addTaskBtn = document.getElementById("addTaskBtn");
 const pendingTasksEl = document.getElementById("pendingTasks");
 const historyTasksEl = document.getElementById("historyTasks");
 
@@ -23,12 +22,11 @@ function setStatus(message, isError = false) {
   statusEl.style.color = isError ? "#fca5a5" : "#86efac";
 }
 
-function setTaskInputEnabled(enabled) {
-  taskInput.disabled = !enabled;
-  const submitButton = taskForm.querySelector("button[type='submit']");
-  if (submitButton) {
-    submitButton.disabled = !enabled;
+function setAddTaskEnabled(enabled) {
+  if (!addTaskBtn) {
+    return;
   }
+  addTaskBtn.disabled = !enabled;
 }
 
 function resetTaskLists(message) {
@@ -229,7 +227,7 @@ async function handleSession(session) {
     }
     setAccountInfo(null);
     logoutBtn.hidden = true;
-    setTaskInputEnabled(false);
+    setAddTaskEnabled(false);
     resetTaskLists("Connectez-vous pour voir vos taches.");
     showAuthOverlay();
     return;
@@ -240,7 +238,7 @@ async function handleSession(session) {
   }
   setAccountInfo(currentUser);
   logoutBtn.hidden = false;
-  setTaskInputEnabled(true);
+  setAddTaskEnabled(true);
   closeAuthOverlay();
 
   await fetchTasks();
@@ -359,18 +357,29 @@ window.addEventListener("appinstalled", () => {
   }
 });
 
-taskForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const title = taskInput.value.trim();
-  if (!title || !supabaseClient || !currentUser) {
-    return;
-  }
+if (addTaskBtn) {
+  addTaskBtn.addEventListener("click", async () => {
+    if (!supabaseClient || !currentUser) {
+      setStatus("Connectez-vous avant d'ajouter une tache.", true);
+      return;
+    }
 
-  await addTask(title);
-  taskInput.value = "";
-});
+    const input = window.prompt("Titre de la tache ?", "");
+    if (input === null) {
+      return;
+    }
 
-setTaskInputEnabled(false);
+    const title = input.trim();
+    if (!title) {
+      setStatus("Le titre de la tache est requis.", true);
+      return;
+    }
+
+    await addTask(title);
+  });
+}
+
+setAddTaskEnabled(false);
 resetTaskLists("Connectez-vous pour voir vos taches.");
 void initSupabase();
 
