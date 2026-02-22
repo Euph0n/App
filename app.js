@@ -8,7 +8,7 @@ const authOverlay = document.getElementById("authOverlay");
 const addTaskBtn = document.getElementById("addTaskBtn");
 const togglePendingBtn = document.getElementById("togglePendingBtn");
 const toggleHistoryBtn = document.getElementById("toggleHistoryBtn");
-const taskTableBodyEl = document.getElementById("taskTableBody");
+const taskListEl = document.getElementById("taskList");
 
 let supabaseClient;
 let currentUser = null;
@@ -32,8 +32,8 @@ function setAddTaskEnabled(enabled) {
   addTaskBtn.disabled = !enabled;
 }
 
-function resetTaskTable(message) {
-  taskTableBodyEl.innerHTML = `<tr><td class="task-empty" colspan="2">${message}</td></tr>`;
+function resetTaskList(message) {
+  taskListEl.innerHTML = `<li class="task-empty">${message}</li>`;
 }
 
 function applyFilterButtonState() {
@@ -78,7 +78,7 @@ function setDetailsToggleState(button, open) {
   button.innerHTML = getDetailsToggleIcon(open);
 }
 
-function setupSwipeToAcknowledge(row, taskId) {
+function setupSwipeToAcknowledge(item, taskId) {
   const minSwipeDistance = 90;
   const maxSwipeDistance = 140;
   let isDragging = false;
@@ -87,19 +87,20 @@ function setupSwipeToAcknowledge(row, taskId) {
   let offsetX = 0;
 
   const setOffset = (value) => {
-    row.style.setProperty("--swipe-offset", `${value}px`);
+    item.style.setProperty("--swipe-offset", `${value}px`);
   };
 
   const resetSwipeState = () => {
-    row.classList.remove("swipe-active");
-    row.classList.remove("swipe-ready");
+    item.classList.remove("swipe-active");
+    item.classList.remove("swipe-ready-ack");
+    item.classList.remove("swipe-ready-delete");
     setOffset(0);
     offsetX = 0;
     isDragging = false;
     pointerId = null;
   };
 
-  row.addEventListener("pointerdown", (event) => {
+  item.addEventListener("pointerdown", (event) => {
     if (event.button !== 0) {
       return;
     }
@@ -111,50 +112,65 @@ function setupSwipeToAcknowledge(row, taskId) {
     pointerId = event.pointerId;
     startX = event.clientX;
     offsetX = 0;
-    row.classList.add("swipe-active");
-    row.setPointerCapture(event.pointerId);
+    item.classList.add("swipe-active");
+    item.setPointerCapture(event.pointerId);
   });
 
-  row.addEventListener("pointermove", (event) => {
+  item.addEventListener("pointermove", (event) => {
     if (!isDragging || event.pointerId !== pointerId) {
       return;
     }
 
     const deltaX = event.clientX - startX;
-    if (deltaX >= 0) {
-      offsetX = 0;
-    } else {
-      offsetX = Math.max(deltaX, -maxSwipeDistance);
-    }
+    offsetX = Math.max(Math.min(deltaX, maxSwipeDistance), -maxSwipeDistance);
 
     setOffset(offsetX);
-    if (Math.abs(offsetX) >= minSwipeDistance) {
-      row.classList.add("swipe-ready");
+    if (offsetX >= minSwipeDistance) {
+      item.classList.add("swipe-ready-ack");
+      item.classList.remove("swipe-ready-delete");
+    } else if (offsetX <= -minSwipeDistance) {
+      item.classList.add("swipe-ready-delete");
+      item.classList.remove("swipe-ready-ack");
     } else {
-      row.classList.remove("swipe-ready");
+      item.classList.remove("swipe-ready-ack");
+      item.classList.remove("swipe-ready-delete");
     }
   });
 
-  row.addEventListener("pointerup", async (event) => {
+  item.addEventListener("pointerup", async (event) => {
     if (!isDragging || event.pointerId !== pointerId) {
       return;
     }
 
-    const shouldAcknowledge = Math.abs(offsetX) >= minSwipeDistance;
+    const shouldAcknowledge = offsetX >= minSwipeDistance;
+    const shouldDelete = offsetX <= -minSwipeDistance;
+
     if (shouldAcknowledge) {
-      row.classList.remove("swipe-active");
-      row.classList.remove("swipe-ready");
-      setOffset(-maxSwipeDistance);
+      item.classList.remove("swipe-active");
+      item.classList.remove("swipe-ready-ack");
+      item.classList.remove("swipe-ready-delete");
+      setOffset(maxSwipeDistance);
       isDragging = false;
       pointerId = null;
       await acknowledgeTask(taskId);
       return;
     }
 
+    if (shouldDelete) {
+      item.classList.remove("swipe-active");
+      item.classList.remove("swipe-ready-ack");
+      item.classList.remove("swipe-ready-delete");
+      setOffset(-maxSwipeDistance);
+      isDragging = false;
+      pointerId = null;
+      await deleteTask(taskId);
+      return;
+    }
+
     resetSwipeState();
   });
 
-  row.addEventListener("pointercancel", () => {
+  item.addEventListener("pointercancel", () => {
     if (!isDragging) {
       return;
     }
@@ -163,56 +179,53 @@ function setupSwipeToAcknowledge(row, taskId) {
 }
 
 function renderTask(task) {
-  const fragment = document.createDocumentFragment();
-  const row = document.createElement("tr");
+  const item = document.createElement("li");
+  item.className = "task-item";
   const isDone = task.status === "done";
   const detailsId = `task-details-${task.id}`;
 
-  const titleCell = document.createElement("td");
-  titleCell.className = "task-title-cell";
-  titleCell.textContent = task.title;
-  row.appendChild(titleCell);
+  const mainRow = document.createElement("div");
+  mainRow.className = "task-item-main";
 
-  const detailsToggleCell = document.createElement("td");
-  detailsToggleCell.className = "task-details-toggle-cell";
+  const title = document.createElement("span");
+  title.className = "task-title";
+  title.textContent = task.title;
+  mainRow.appendChild(title);
+
   const detailsToggleBtn = document.createElement("button");
   detailsToggleBtn.type = "button";
   detailsToggleBtn.className = "secondary icon-btn task-details-btn";
   detailsToggleBtn.setAttribute("aria-controls", detailsId);
   setDetailsToggleState(detailsToggleBtn, false);
-  detailsToggleCell.appendChild(detailsToggleBtn);
-  row.appendChild(detailsToggleCell);
+  mainRow.appendChild(detailsToggleBtn);
+  item.appendChild(mainRow);
+
   if (!isDone) {
-    row.classList.add("task-row-pending");
-    setupSwipeToAcknowledge(row, task.id);
+    item.classList.add("task-item-pending");
+    setupSwipeToAcknowledge(item, task.id);
   }
 
-  const detailsRow = document.createElement("tr");
-  detailsRow.id = detailsId;
-  detailsRow.className = "task-details-row";
-  detailsRow.hidden = true;
+  const detailsPanel = document.createElement("div");
+  detailsPanel.id = detailsId;
+  detailsPanel.className = "task-details-panel";
+  detailsPanel.hidden = true;
 
-  const detailsCell = document.createElement("td");
-  detailsCell.className = "task-details-cell";
-  detailsCell.colSpan = 2;
   const createdAt = formatDate(task.created_at);
   const completedAt = isDone && task.completed_at ? formatDate(task.completed_at) : "Non acquittee";
-  detailsCell.innerHTML = `<div class="task-details-content"><div><strong>Creee le:</strong> ${createdAt}</div><div><strong>Acquittee le:</strong> ${completedAt}</div></div>`;
-  detailsRow.appendChild(detailsCell);
+  detailsPanel.innerHTML = `<div class="task-details-content"><div><strong>Creee le:</strong> ${createdAt}</div><div><strong>Acquittee le:</strong> ${completedAt}</div></div>`;
+  item.appendChild(detailsPanel);
 
   detailsToggleBtn.addEventListener("click", () => {
-    const open = detailsRow.hidden;
-    detailsRow.hidden = !open;
+    const open = detailsPanel.hidden;
+    detailsPanel.hidden = !open;
     setDetailsToggleState(detailsToggleBtn, open);
   });
 
-  fragment.appendChild(row);
-  fragment.appendChild(detailsRow);
-  return fragment;
+  return item;
 }
 
 function renderFilteredTasks() {
-  taskTableBodyEl.replaceChildren();
+  taskListEl.replaceChildren();
 
   const filtered = allTasks.filter((task) => {
     if (task.status === "pending") {
@@ -224,15 +237,15 @@ function renderFilteredTasks() {
     return true;
   });
 
-  filtered.forEach((task) => taskTableBodyEl.appendChild(renderTask(task)));
+  filtered.forEach((task) => taskListEl.appendChild(renderTask(task)));
 
   if (!allTasks.length) {
-    resetTaskTable("Aucune tache.");
+    resetTaskList("Aucune tache.");
     return;
   }
 
   if (!filtered.length) {
-    resetTaskTable("Aucune tache pour ce filtre.");
+    resetTaskList("Aucune tache pour ce filtre.");
   }
 }
 
@@ -292,7 +305,7 @@ function setAccountInfo(user) {
 
 async function fetchTasks() {
   if (!supabaseClient || !currentUser) {
-    resetTaskTable("Connectez-vous pour voir vos taches.");
+    resetTaskList("Connectez-vous pour voir vos taches.");
     return;
   }
 
@@ -353,6 +366,22 @@ async function acknowledgeTask(id) {
   await fetchTasks();
 }
 
+async function deleteTask(id) {
+  if (!currentUser) {
+    setStatus("Session invalide. Reconnectez-vous.", true);
+    return;
+  }
+
+  const { error } = await supabaseClient.from("tasks").delete().eq("id", id).eq("user_id", currentUser.id);
+
+  if (error) {
+    setStatus(`Erreur de suppression: ${error.message}`, true);
+    return;
+  }
+
+  await fetchTasks();
+}
+
 async function signInWithGoogle() {
   const redirectTo = `${window.location.origin}${window.location.pathname}`;
   const { error } = await supabaseClient.auth.signInWithOAuth({
@@ -387,7 +416,7 @@ async function handleSession(session) {
     setAccountInfo(null);
     logoutBtn.hidden = true;
     setAddTaskEnabled(false);
-    resetTaskTable("Connectez-vous pour voir vos taches.");
+    resetTaskList("Connectez-vous pour voir vos taches.");
     showAuthOverlay();
     return;
   }
@@ -556,7 +585,7 @@ if (toggleHistoryBtn) {
 
 setAddTaskEnabled(false);
 applyFilterButtonState();
-resetTaskTable("Connectez-vous pour voir vos taches.");
+resetTaskList("Connectez-vous pour voir vos taches.");
 void initSupabase();
 
 window.addEventListener("focus", () => {

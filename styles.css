@@ -121,70 +121,65 @@ input:disabled {
   cursor: not-allowed;
 }
 
-.task-table-wrap {
-  overflow-x: auto;
+.task-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.task-item {
+  --swipe-offset: 0px;
+  background: #0f172a;
   border: 1px solid #334155;
   border-radius: 10px;
+  overflow: hidden;
 }
 
-.task-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 640px;
-  background: #0f172a;
-}
-
-.task-table th,
-.task-table td {
+.task-item-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
   padding: 0.65rem 0.75rem;
-  border-bottom: 1px solid #334155;
-  text-align: left;
-  vertical-align: middle;
 }
 
-.task-table th {
-  background: #1e293b;
-  color: #cbd5e1;
-  font-size: 0.82rem;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.task-table tbody tr:last-child td {
-  border-bottom: 0;
-}
-
-.task-title-cell {
+.task-title {
   font-weight: 600;
   color: #f8fafc;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
-.task-details-toggle-cell,
-.task-table td.task-details-toggle-cell {
-  white-space: nowrap;
-  color: #cbd5e1;
-  width: 1%;
+.task-details-btn {
+  flex: 0 0 auto;
 }
 
-.task-row-pending {
-  --swipe-offset: 0px;
-}
-
-.task-row-pending > td {
+.task-item-pending {
   transform: translateX(var(--swipe-offset));
   transition: transform 0.16s ease;
+  touch-action: pan-y;
 }
 
-.task-row-pending.swipe-active > td {
+.task-item-pending.swipe-active {
   transition: none;
 }
 
-.task-row-pending.swipe-ready > td {
+.task-item-pending.swipe-ready-ack {
+  border-color: #166534;
   background: #14532d;
 }
 
-.task-details-cell {
+.task-item-pending.swipe-ready-delete {
+  border-color: #b91c1c;
+  background: #7f1d1d;
+}
+
+.task-details-panel {
   background: #111827;
+  border-top: 1px solid #334155;
+  padding: 0.55rem 0.75rem 0.65rem;
 }
 
 .task-details-content {
@@ -199,9 +194,12 @@ input:disabled {
 }
 
 .task-empty {
-  text-align: center;
+  border: 1px dashed #334155;
+  border-radius: 10px;
+  background: #0b1220;
   color: #cbd5e1;
   padding: 1rem 0.75rem;
+  text-align: center;
 }
 
 .auth-row.compact {
@@ -331,11 +329,5 @@ input:disabled {
   .settings-panel {
     left: 0;
     right: auto;
-  }
-
-  .task-table th,
-  .task-table td {
-    padding: 0.55rem 0.6rem;
-    font-size: 0.9rem;
   }
 }
