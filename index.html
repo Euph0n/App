@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#0f172a" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <title>TaskFlow Gratuit</title>
+    <title>Tâches</title>
     <link rel="stylesheet" href="styles.css" />
     <link
       rel="stylesheet"
@@ -20,19 +20,19 @@
     <main class="app">
       <section class="task-workspace">
         <div class="section-head">
-          <h2>Gestionnaire de taches</h2>
+          <h2>Gestionnaire de tâches</h2>
           <div class="section-actions">
-            <button id="addTaskBtn" type="button" class="secondary settings-trigger icon-btn" aria-label="Ajouter une tache">
-              <svg
-                class="action-icon"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                width="18"
-                height="18"
-                aria-hidden="true"
-              >
-                <path fill="currentColor" d="M11 5a1 1 0 1 1 2 0v6h6a1 1 0 1 1 0 2h-6v6a1 1 0 1 1-2 0v-6H5a1 1 0 1 1 0-2h6z" />
-              </svg>
+            <button id="addTaskBtn" type="button" class="secondary settings-trigger icon-btn" aria-label="Ajouter une tâche">
+              <i class="bi bi-plus-lg" aria-hidden="true"></i>
+            </button>
+            <button
+              id="openTemplatesBtn"
+              type="button"
+              class="secondary settings-trigger icon-btn"
+              aria-label="Ouvrir les modèles"
+              title="Modèles"
+            >
+              <i class="bi bi-bookmark-star" aria-hidden="true"></i>
             </button>
             <button
               id="togglePendingBtn"
@@ -40,22 +40,10 @@
               class="secondary settings-trigger icon-btn"
               aria-controls="tasksSection"
               aria-pressed="true"
-              aria-label="Filtrer taches en cours"
-              title="Filtrer taches en cours"
+              aria-label="Filtrer tâches en cours"
+              title="Filtrer tâches en cours"
             >
-              <svg
-                class="action-icon"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                width="18"
-                height="18"
-                aria-hidden="true"
-              >
-                <path
-                  fill="currentColor"
-                  d="M7 2h10a1 1 0 0 1 .8 1.6L14.25 8A2 2 0 0 0 14 9.2V10a2 2 0 0 0 .25 1L17.8 16.4A1 1 0 0 1 17 18H7a1 1 0 0 1-.8-1.6L9.75 11A2 2 0 0 0 10 10V9.2a2 2 0 0 0-.25-1L6.2 3.6A1 1 0 0 1 7 2zm2.04 2 2.24 2.8c.45.57.72 1.29.72 2.02V10c0 .74-.27 1.45-.72 2.02L9.04 14h5.92l-2.24-1.98A3.24 3.24 0 0 1 12 10V8.82c0-.73.27-1.45.72-2.02L14.96 4H9.04z"
-                />
-              </svg>
+              <i class="bi bi-hourglass-split" aria-hidden="true"></i>
             </button>
             <button
               id="toggleHistoryBtn"
@@ -66,39 +54,15 @@
               aria-label="Filtrer historique"
               title="Filtrer historique"
             >
-              <svg
-                class="action-icon"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                width="18"
-                height="18"
-                aria-hidden="true"
-              >
-                <path
-                  fill="currentColor"
-                  d="M13 3a9 9 0 1 1-6.36 2.64L5.41 7.87A1 1 0 0 1 4 6.46l3.07-3.07A1 1 0 0 1 8.5 4.8L8.05 5.25A7 7 0 1 0 13 5a1 1 0 1 1 0-2zm-1 4a1 1 0 0 1 1 1v3.59l2.7 2.7a1 1 0 1 1-1.4 1.42l-3-3A1 1 0 0 1 11 12V8a1 1 0 0 1 1-1z"
-                />
-              </svg>
+              <i class="bi bi-clock-history" aria-hidden="true"></i>
             </button>
             <details id="settingsMenu" class="settings-menu" hidden>
-              <summary class="secondary settings-trigger" aria-label="Parametres">
-                <svg
-                  class="settings-icon"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  width="18"
-                  height="18"
-                  aria-hidden="true"
-                >
-                  <path
-                    fill="currentColor"
-                    d="M19.14 12.94a7.43 7.43 0 0 0 .05-.94a7.43 7.43 0 0 0-.05-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.39 7.39 0 0 0-1.62-.94l-.36-2.54A.5.5 0 0 0 13.9 2h-3.8a.5.5 0 0 0-.5.42l-.36 2.54c-.57.23-1.11.54-1.62.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 8.48a.5.5 0 0 0 .12.64l2.03 1.58a7.43 7.43 0 0 0-.05.94c0 .32.02.63.05.94l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.4 1.05.72 1.62.94l.36 2.54a.5.5 0 0 0 .5.42h3.8a.5.5 0 0 0 .5-.42l.36-2.54c.57-.23 1.11-.54 1.62-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"
-                  />
-                </svg>
+              <summary class="secondary settings-trigger" aria-label="Paramètres">
+                <i class="bi bi-gear" aria-hidden="true"></i>
               </summary>
               <div class="settings-panel">
                 <p id="accountInfo" class="settings-account"></p>
-                <button id="logoutBtn" type="button" class="secondary">Deconnexion</button>
+                <button id="logoutBtn" type="button" class="secondary">Déconnexion</button>
                 <button id="installBtn" type="button" class="secondary" hidden>Installer</button>
               </div>
             </details>
@@ -122,11 +86,17 @@
 
     <div id="taskFormOverlay" class="auth-overlay" hidden>
       <div class="auth-modal task-form-modal" role="dialog" aria-modal="true" aria-labelledby="taskFormTitle">
-        <h2 id="taskFormTitle">Nouvelle tache</h2>
+        <h2 id="taskFormTitle">Nouvelle tâche</h2>
         <form id="taskForm" class="task-form">
           <div class="task-form-main">
-            <label for="taskTitleInput">Titre</label>
-            <input id="taskTitleInput" name="title" type="text" autocomplete="off" required />
+            <label for="taskTitleInput">Titre de la tâche</label>
+            <input id="taskTitleInput" name="title" type="text" autocomplete="off" />
+            <label for="taskDescriptionInput">Description (optionnelle)</label>
+            <textarea
+              id="taskDescriptionInput"
+              name="description"
+              rows="3"
+            ></textarea>
           </div>
 
           <div class="task-form-panels">
@@ -163,7 +133,7 @@
             </div>
 
             <div class="task-panel-block">
-              <p class="task-panel-label">Recurrence</p>
+              <p class="task-panel-label">Récurrence</p>
               <div class="task-recurrence-group">
                 <select id="taskRecurrenceInput" name="recurrence">
                   <option value="">Aucune</option>
@@ -171,12 +141,12 @@
                   <option value="weekly">Hebdo</option>
                   <option value="monthly">Mensuelle</option>
                   <option value="weekly_days">Choisir les jours de la semaine</option>
-                  <option value="custom">Personnalisee</option>
+                  <option value="custom">Personnalisée</option>
                 </select>
                 <div id="recurrenceCustom" class="recurrence-custom" hidden>
                   <span class="recurrence-custom-prefix">Tous les</span>
                   <input id="customCountInput" class="recurrence-custom-count" type="number" min="1" max="30" step="1" value="1" aria-label="Nombre" />
-                  <select id="customUnitSelect" class="recurrence-custom-unit" aria-label="Temporalite">
+                  <select id="customUnitSelect" class="recurrence-custom-unit" aria-label="Temporalité">
                     <option value="day">jours</option>
                     <option value="week">semaines</option>
                     <option value="month">mois</option>
@@ -196,6 +166,7 @@
           </div>
 
           <div class="task-form-actions">
+            <button id="saveTemplateBtn" type="button" class="secondary">Enregistrer modèle</button>
             <button id="cancelTaskFormBtn" type="button" class="secondary">Annuler</button>
             <button id="submitTaskFormBtn" type="submit">Ajouter</button>
           </div>
@@ -203,10 +174,83 @@
       </div>
     </div>
 
+    <div id="createTypeOverlay" class="auth-overlay" hidden>
+      <div class="auth-modal create-type-modal" role="dialog" aria-modal="true" aria-labelledby="createTypeTitle">
+        <h2 id="createTypeTitle">Que voulez-vous créer ?</h2>
+        <div class="create-type-actions">
+          <button id="createSingleTaskBtn" type="button">Créer une tâche</button>
+          <button id="createJourneyBtn" type="button" class="secondary">Créer un parcours</button>
+          <button id="cancelCreateTypeBtn" type="button" class="secondary">Annuler</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="journeyFormOverlay" class="auth-overlay" hidden>
+      <div class="auth-modal templates-modal" role="dialog" aria-modal="true" aria-labelledby="journeyFormTitle">
+        <h2 id="journeyFormTitle">Nouveau parcours</h2>
+        <form id="journeyForm" class="task-form">
+          <div class="task-form-main">
+            <label for="journeyNameInput">Nom du parcours</label>
+            <input
+              id="journeyNameInput"
+              name="journey_name"
+              type="text"
+              required
+              autocomplete="off"
+              placeholder="Ex: Routine du matin"
+            />
+            <div class="task-path-actions">
+              <button id="addTaskToJourneyBtn" type="button" class="secondary">
+                Ajouter une tâche
+              </button>
+              <button id="addSavedTaskToJourneyBtn" type="button" class="secondary">
+                Ajouter tâche enregistrée
+              </button>
+            </div>
+            <ul id="journeyDraftList" class="template-list journey-draft-list" hidden></ul>
+            <p id="journeyDraftEmpty" class="task-empty">Aucune tâche dans le parcours.</p>
+          </div>
+          <div class="task-form-actions">
+            <button id="cancelJourneyFormBtn" type="button" class="secondary">Annuler</button>
+            <button id="submitJourneyFormBtn" type="submit">Créer le parcours</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="templatesOverlay" class="auth-overlay" hidden>
+      <div class="auth-modal templates-modal" role="dialog" aria-modal="true" aria-labelledby="templatesTitle">
+        <h2 id="templatesTitle">Modèles enregistrés</h2>
+        <ul id="templatesList" class="template-list"></ul>
+        <p id="templatesEmpty" class="task-empty" hidden>Aucun modèle enregistré.</p>
+        <div class="task-form-actions">
+          <button id="closeTemplatesBtn" type="button" class="secondary">Fermer</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="journeyTaskPickerOverlay" class="auth-overlay" hidden>
+      <div
+        class="auth-modal templates-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="journeyTaskPickerTitle"
+      >
+        <h2 id="journeyTaskPickerTitle">Tâches enregistrées</h2>
+        <ul id="journeyTaskPickerList" class="template-list"></ul>
+        <p id="journeyTaskPickerEmpty" class="task-empty" hidden>
+          Aucune tâche enregistrée. Enregistrez d'abord une tâche seule comme modèle.
+        </p>
+        <div class="task-form-actions">
+          <button id="closeJourneyTaskPickerBtn" type="button" class="secondary">Fermer</button>
+        </div>
+      </div>
+    </div>
+
     <div id="dueTimeOverlay" class="auth-overlay" hidden>
       <div class="auth-modal due-time-modal" role="dialog" aria-modal="true" aria-labelledby="dueTimeTitle">
         <h2 id="dueTimeTitle">Heure</h2>
-        <div class="time-input-wrap" aria-label="Selecteur d'heure">
+        <div class="time-input-wrap" aria-label="Sélecteur d'heure">
           <input
             id="dueTimeTextInput"
             class="time-single-input"

@@ -1,7 +1,7 @@
 {
-  "name": "TaskFlow Gratuit",
-  "short_name": "TaskFlow",
-  "description": "Gestion de taches avec historique et connexion Google.",
+  "name": "Gestionnaire de tâches",
+  "short_name": "Tâches",
+  "description": "Gestion de tâches avec historique et connexion Google.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

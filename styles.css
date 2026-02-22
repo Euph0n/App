@@ -130,6 +130,11 @@ button.secondary {
   transform: translateY(1px);
 }
 
+.section-actions .bi {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
 button[hidden] {
   display: none;
 }
@@ -240,9 +245,8 @@ input:disabled {
   margin-left: auto;
   display: inline-flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 0.05rem;
-  width: calc(6ch + 1.4rem + 0.05rem);
+  justify-content: flex-end;
+  gap: 0.2rem;
   min-width: calc(6ch + 1.4rem + 0.05rem);
   flex: 0 0 auto;
 }
@@ -252,6 +256,25 @@ input:disabled {
   text-decoration-thickness: 1.5px;
   text-decoration-color: #94a3b8;
   color: #cbd5e1;
+}
+
+.task-title-blocked {
+  color: #94a3b8;
+}
+
+.task-locked-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fbbf24;
+  min-width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+}
+
+.task-locked-inline .bi {
+  font-size: 0.78rem;
+  line-height: 1;
 }
 
 .task-details-btn {
@@ -442,6 +465,116 @@ input:disabled {
 .task-form-main {
   display: grid;
   gap: 0.45rem;
+}
+
+.task-form-help {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.create-type-modal {
+  max-width: 360px;
+}
+
+.create-type-actions {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.create-type-actions button {
+  width: 100%;
+}
+
+.task-path-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.task-path-actions button {
+  padding: 0.35rem 0.55rem;
+  font-size: 0.8rem;
+}
+
+.journey-draft-list {
+  margin: 0;
+  max-height: 220px;
+}
+
+.journey-draft-head {
+  align-items: center;
+}
+
+.journey-draft-remove-btn {
+  width: 2rem;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.journey-draft-remove-btn .bi {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.templates-modal {
+  max-width: 560px;
+}
+
+.template-list {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+  max-height: min(60vh, 540px);
+  overflow: auto;
+}
+
+.template-item {
+  border: 1px solid #334155;
+  border-radius: 10px;
+  background: #0f172a;
+  padding: 0.55rem 0.6rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.template-item-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.template-item-title {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.template-item-meta {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.template-item-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.template-item-actions button {
+  padding: 0.35rem 0.55rem;
+  font-size: 0.8rem;
 }
 
 .task-form-panels {
