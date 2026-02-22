@@ -11,8 +11,13 @@ const taskTitleInput = document.getElementById("taskTitleInput");
 const taskDueFields = document.getElementById("taskDueFields");
 const taskDueInput = document.getElementById("taskDueInput");
 const taskDueTimeInput = document.getElementById("taskDueTimeInput");
-const taskDueTimeFallback = document.getElementById("taskDueTimeFallback");
+const taskDueTimeWheelBtn = document.getElementById("taskDueTimeWheelBtn");
 const toggleDueInputBtn = document.getElementById("toggleDueInputBtn");
+const dueTimeOverlay = document.getElementById("dueTimeOverlay");
+const wheelHourSelect = document.getElementById("wheelHourSelect");
+const wheelMinuteSelect = document.getElementById("wheelMinuteSelect");
+const cancelDueTimeBtn = document.getElementById("cancelDueTimeBtn");
+const confirmDueTimeBtn = document.getElementById("confirmDueTimeBtn");
 const taskRecurrenceInput = document.getElementById("taskRecurrenceInput");
 const toggleRecurrenceInputBtn = document.getElementById("toggleRecurrenceInputBtn");
 const recurrenceDaysEl = document.getElementById("recurrenceDays");
@@ -204,50 +209,62 @@ function openDueDatePicker() {
 }
 
 function openDueTimePicker() {
-  if (!taskDueTimeInput) {
+  if (!dueTimeOverlay || !wheelHourSelect || !wheelMinuteSelect || !taskDueTimeInput) {
     return;
   }
-
-  if (typeof taskDueTimeInput.showPicker === "function") {
-    taskDueTimeInput.showPicker();
-    return;
-  }
-
-  taskDueTimeInput.focus();
-  taskDueTimeInput.click();
+  const [hours = "09", minutes = "00"] = (taskDueTimeInput.value || "09:00").split(":");
+  wheelHourSelect.value = hours;
+  wheelMinuteSelect.value = minutes;
+  dueTimeOverlay.hidden = false;
+  wheelHourSelect.focus();
 }
 
-function shouldUseDueTimeFallback() {
-  if (!taskDueTimeInput || !taskDueTimeFallback) {
+function closeDueTimePicker() {
+  if (!dueTimeOverlay) {
     return false;
   }
-  const isDesktop = window.matchMedia && window.matchMedia("(pointer: fine)").matches;
-  const hasNativePicker = typeof taskDueTimeInput.showPicker === "function";
-  return isDesktop && !hasNativePicker;
-}
-
-function syncDueTimeControls() {
-  if (!taskDueTimeInput || !taskDueTimeFallback) {
-    return;
-  }
-
-  const useFallback = shouldUseDueTimeFallback();
-  taskDueTimeFallback.hidden = !useFallback;
-  taskDueTimeInput.hidden = useFallback;
-
-  if (useFallback && taskDueTimeInput.value) {
-    taskDueTimeFallback.value = taskDueTimeInput.value;
-  }
-  if (!useFallback && taskDueTimeFallback.value) {
-    taskDueTimeInput.value = taskDueTimeFallback.value;
-  }
+  dueTimeOverlay.hidden = true;
+  return true;
 }
 
 function getDueTimeValue() {
-  if (shouldUseDueTimeFallback() && taskDueTimeFallback) {
-    return taskDueTimeFallback.value || "09:00";
-  }
   return taskDueTimeInput?.value || "09:00";
+}
+
+function setDueTimeValue(value) {
+  if (!taskDueTimeInput || !taskDueTimeWheelBtn) {
+    return;
+  }
+  taskDueTimeInput.value = value;
+  taskDueTimeWheelBtn.textContent = value;
+}
+
+function pad2(value) {
+  return String(value).padStart(2, "0");
+}
+
+function initDueTimeWheel() {
+  if (!wheelHourSelect || !wheelMinuteSelect) {
+    return;
+  }
+
+  if (!wheelHourSelect.options.length) {
+    for (let hour = 0; hour < 24; hour += 1) {
+      const option = document.createElement("option");
+      option.value = pad2(hour);
+      option.textContent = pad2(hour);
+      wheelHourSelect.appendChild(option);
+    }
+  }
+
+  if (!wheelMinuteSelect.options.length) {
+    for (let minute = 0; minute < 60; minute += 1) {
+      const option = document.createElement("option");
+      option.value = pad2(minute);
+      option.textContent = pad2(minute);
+      wheelMinuteSelect.appendChild(option);
+    }
+  }
 }
 
 function parseRecurrenceRule(rule) {
@@ -782,13 +799,8 @@ function resetTaskForm() {
     return;
   }
   taskFormEl.reset();
-  if (taskDueTimeInput) {
-    taskDueTimeInput.value = "09:00";
-  }
-  if (taskDueTimeFallback) {
-    taskDueTimeFallback.value = "09:00";
-  }
-  syncDueTimeControls();
+  setDueTimeValue("09:00");
+  closeDueTimePicker();
   setDueInputExpanded(false);
   updateDueInputVisibility();
   setRecurrenceInputExpanded(false);
@@ -805,7 +817,8 @@ function openTaskForm() {
   if (!taskFormOverlay || !taskFormEl || !taskTitleInput) {
     return;
   }
-  syncDueTimeControls();
+  initDueTimeWheel();
+  setDueTimeValue(getDueTimeValue());
   setDueInputExpanded(false);
   updateDueInputVisibility();
   setRecurrenceInputExpanded(false);
@@ -1260,21 +1273,39 @@ if (toggleDueInputBtn && taskDueInput) {
     setDueInputExpanded(taskDueInput.value.trim().length > 0);
     updateDueInputVisibility();
     if (taskDueInput.value.trim().length > 0) {
-      if (shouldUseDueTimeFallback() && taskDueTimeFallback) {
-        taskDueTimeFallback.focus();
-      } else {
-        openDueTimePicker();
-      }
+      openDueTimePicker();
     }
   });
 }
 
-if (taskDueTimeInput && taskDueTimeFallback) {
-  taskDueTimeInput.addEventListener("input", () => {
-    taskDueTimeFallback.value = taskDueTimeInput.value || "09:00";
+if (taskDueTimeWheelBtn) {
+  taskDueTimeWheelBtn.addEventListener("click", () => {
+    setDueInputExpanded(true);
+    updateDueInputVisibility();
+    openDueTimePicker();
   });
-  taskDueTimeFallback.addEventListener("change", () => {
-    taskDueTimeInput.value = taskDueTimeFallback.value || "09:00";
+}
+
+if (cancelDueTimeBtn) {
+  cancelDueTimeBtn.addEventListener("click", () => {
+    closeDueTimePicker();
+  });
+}
+
+if (confirmDueTimeBtn && wheelHourSelect && wheelMinuteSelect) {
+  confirmDueTimeBtn.addEventListener("click", () => {
+    const hour = wheelHourSelect.value || "09";
+    const minute = wheelMinuteSelect.value || "00";
+    setDueTimeValue(`${hour}:${minute}`);
+    closeDueTimePicker();
+  });
+}
+
+if (dueTimeOverlay) {
+  dueTimeOverlay.addEventListener("click", (event) => {
+    if (event.target === dueTimeOverlay) {
+      closeDueTimePicker();
+    }
   });
 }
 
@@ -1341,7 +1372,8 @@ if (toggleHistoryBtn) {
 
 setAddTaskEnabled(false);
 applyFilterButtonState();
-syncDueTimeControls();
+initDueTimeWheel();
+setDueTimeValue(getDueTimeValue());
 setDueInputExpanded(false);
 updateDueInputVisibility();
 setRecurrenceInputExpanded(false);
