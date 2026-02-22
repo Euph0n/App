@@ -37,6 +37,21 @@ body {
   gap: 0.5rem;
 }
 
+.section-actions > .settings-trigger,
+.section-actions .settings-menu > .settings-trigger {
+  width: 2rem;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0;
+  line-height: 1;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
 .list-title {
   margin: 0.2rem 0 0.55rem;
   font-size: 1rem;
@@ -138,6 +153,7 @@ input:disabled {
 
 .settings-menu {
   position: relative;
+  display: inline-flex;
 }
 
 .settings-menu > summary {
