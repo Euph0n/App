@@ -8,7 +8,7 @@ const authOverlay = document.getElementById("authOverlay");
 const addTaskBtn = document.getElementById("addTaskBtn");
 const togglePendingBtn = document.getElementById("togglePendingBtn");
 const toggleHistoryBtn = document.getElementById("toggleHistoryBtn");
-const taskListEl = document.getElementById("taskList");
+const taskTableBodyEl = document.getElementById("taskTableBody");
 
 let supabaseClient;
 let currentUser = null;
@@ -32,8 +32,8 @@ function setAddTaskEnabled(enabled) {
   addTaskBtn.disabled = !enabled;
 }
 
-function resetTaskList(message) {
-  taskListEl.innerHTML = `<li>${message}</li>`;
+function resetTaskTable(message) {
+  taskTableBodyEl.innerHTML = `<tr><td class="task-empty" colspan="4">${message}</td></tr>`;
 }
 
 function applyFilterButtonState() {
@@ -53,29 +53,42 @@ function formatDate(value) {
 }
 
 function renderTask(task) {
-  const item = document.createElement("li");
-  item.className = "task-item";
+  const row = document.createElement("tr");
   const isDone = task.status === "done";
 
-  const content = document.createElement("div");
-  content.innerHTML = `<strong>${task.title}</strong><div class="task-meta">Creee le ${formatDate(
-    task.created_at
-  )}${isDone && task.completed_at ? ` - Acquittee le ${formatDate(task.completed_at)}` : ""}</div>`;
+  const titleCell = document.createElement("td");
+  titleCell.className = "task-title-cell";
+  titleCell.textContent = task.title;
+  row.appendChild(titleCell);
 
-  item.appendChild(content);
+  const createdCell = document.createElement("td");
+  createdCell.className = "task-date-cell";
+  createdCell.textContent = formatDate(task.created_at);
+  row.appendChild(createdCell);
+
+  const completedCell = document.createElement("td");
+  completedCell.className = "task-date-cell";
+  completedCell.textContent = isDone && task.completed_at ? formatDate(task.completed_at) : "-";
+  row.appendChild(completedCell);
+
+  const actionCell = document.createElement("td");
+  actionCell.className = "task-action-cell";
 
   if (!isDone) {
     const button = document.createElement("button");
     button.textContent = "Acquitter";
     button.addEventListener("click", () => acknowledgeTask(task.id));
-    item.appendChild(button);
+    actionCell.appendChild(button);
+  } else {
+    actionCell.textContent = "-";
   }
 
-  return item;
+  row.appendChild(actionCell);
+  return row;
 }
 
 function renderFilteredTasks() {
-  taskListEl.replaceChildren();
+  taskTableBodyEl.replaceChildren();
 
   const filtered = allTasks.filter((task) => {
     if (task.status === "pending") {
@@ -87,15 +100,15 @@ function renderFilteredTasks() {
     return true;
   });
 
-  filtered.forEach((task) => taskListEl.appendChild(renderTask(task)));
+  filtered.forEach((task) => taskTableBodyEl.appendChild(renderTask(task)));
 
   if (!allTasks.length) {
-    taskListEl.innerHTML = "<li>Aucune tache.</li>";
+    resetTaskTable("Aucune tache.");
     return;
   }
 
   if (!filtered.length) {
-    taskListEl.innerHTML = "<li>Aucune tache pour ce filtre.</li>";
+    resetTaskTable("Aucune tache pour ce filtre.");
   }
 }
 
@@ -155,7 +168,7 @@ function setAccountInfo(user) {
 
 async function fetchTasks() {
   if (!supabaseClient || !currentUser) {
-    resetTaskList("Connectez-vous pour voir vos taches.");
+    resetTaskTable("Connectez-vous pour voir vos taches.");
     return;
   }
 
@@ -193,7 +206,6 @@ async function addTask(title) {
     return;
   }
 
-  setStatus("Tache ajoutee.");
   await fetchTasks();
 }
 
@@ -251,7 +263,7 @@ async function handleSession(session) {
     setAccountInfo(null);
     logoutBtn.hidden = true;
     setAddTaskEnabled(false);
-    resetTaskList("Connectez-vous pour voir vos taches.");
+    resetTaskTable("Connectez-vous pour voir vos taches.");
     showAuthOverlay();
     return;
   }
@@ -420,7 +432,7 @@ if (toggleHistoryBtn) {
 
 setAddTaskEnabled(false);
 applyFilterButtonState();
-resetTaskList("Connectez-vous pour voir vos taches.");
+resetTaskTable("Connectez-vous pour voir vos taches.");
 void initSupabase();
 
 window.addEventListener("focus", () => {
