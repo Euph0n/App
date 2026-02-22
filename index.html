@@ -8,6 +8,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>TaskFlow Gratuit</title>
     <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -123,16 +127,98 @@
           <label for="taskTitleInput">Titre</label>
           <input id="taskTitleInput" name="title" type="text" autocomplete="off" required />
 
-          <label for="taskDueInput">Echeance (optionnel)</label>
-          <input id="taskDueInput" name="due_at" type="datetime-local" />
+          <div class="task-form-shortcuts">
+            <div class="task-due-picker">
+              <button
+                id="toggleDueInputBtn"
+                type="button"
+                class="secondary icon-btn task-due-toggle"
+                aria-label="Ajouter une echeance"
+                title="Ajouter une echeance"
+              >
+                <i class="bi bi-calendar3" aria-hidden="true"></i>
+              </button>
+              <div id="taskDueFields" class="task-due-fields" hidden>
+                <input id="taskDueInput" name="due_date" type="date" />
+                <input
+                  id="taskDueTimeInput"
+                  name="due_time"
+                  type="time"
+                  step="60"
+                  value="09:00"
+                  aria-label="Heure de l'echeance"
+                />
+                <select id="taskDueTimeFallback" name="due_time_fallback" aria-label="Heure de l'echeance" hidden>
+                  <option value="00:00">00:00</option>
+                  <option value="00:30">00:30</option>
+                  <option value="01:00">01:00</option>
+                  <option value="01:30">01:30</option>
+                  <option value="02:00">02:00</option>
+                  <option value="02:30">02:30</option>
+                  <option value="03:00">03:00</option>
+                  <option value="03:30">03:30</option>
+                  <option value="04:00">04:00</option>
+                  <option value="04:30">04:30</option>
+                  <option value="05:00">05:00</option>
+                  <option value="05:30">05:30</option>
+                  <option value="06:00">06:00</option>
+                  <option value="06:30">06:30</option>
+                  <option value="07:00">07:00</option>
+                  <option value="07:30">07:30</option>
+                  <option value="08:00">08:00</option>
+                  <option value="08:30">08:30</option>
+                  <option value="09:00" selected>09:00</option>
+                  <option value="09:30">09:30</option>
+                  <option value="10:00">10:00</option>
+                  <option value="10:30">10:30</option>
+                  <option value="11:00">11:00</option>
+                  <option value="11:30">11:30</option>
+                  <option value="12:00">12:00</option>
+                  <option value="12:30">12:30</option>
+                  <option value="13:00">13:00</option>
+                  <option value="13:30">13:30</option>
+                  <option value="14:00">14:00</option>
+                  <option value="14:30">14:30</option>
+                  <option value="15:00">15:00</option>
+                  <option value="15:30">15:30</option>
+                  <option value="16:00">16:00</option>
+                  <option value="16:30">16:30</option>
+                  <option value="17:00">17:00</option>
+                  <option value="17:30">17:30</option>
+                  <option value="18:00">18:00</option>
+                  <option value="18:30">18:30</option>
+                  <option value="19:00">19:00</option>
+                  <option value="19:30">19:30</option>
+                  <option value="20:00">20:00</option>
+                  <option value="20:30">20:30</option>
+                  <option value="21:00">21:00</option>
+                  <option value="21:30">21:30</option>
+                  <option value="22:00">22:00</option>
+                  <option value="22:30">22:30</option>
+                  <option value="23:00">23:00</option>
+                  <option value="23:30">23:30</option>
+                </select>
+              </div>
+            </div>
 
-          <label for="taskRecurrenceInput">Recurrence</label>
-          <select id="taskRecurrenceInput" name="recurrence">
-            <option value="">Aucune</option>
-            <option value="daily">Quotidienne</option>
-            <option value="weekly">Hebdomadaire (jours)</option>
-            <option value="monthly">Mensuelle</option>
-          </select>
+            <div class="task-recurrence-picker">
+              <button
+                id="toggleRecurrenceInputBtn"
+                type="button"
+                class="secondary icon-btn task-recurrence-toggle"
+                aria-label="Ajouter une recurrence"
+                title="Ajouter une recurrence"
+              >
+                <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
+              </button>
+              <select id="taskRecurrenceInput" name="recurrence" hidden>
+                <option value="">Aucune</option>
+                <option value="daily">Quotidienne</option>
+                <option value="weekly">Hebdomadaire (jours)</option>
+                <option value="monthly">Mensuelle</option>
+              </select>
+            </div>
+          </div>
           <div id="recurrenceDays" class="recurrence-days" hidden>
             <button type="button" class="secondary recurrence-day-btn" data-day="1" aria-pressed="false">L</button>
             <button type="button" class="secondary recurrence-day-btn" data-day="2" aria-pressed="false">M</button>

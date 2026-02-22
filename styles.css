@@ -202,6 +202,22 @@ input:disabled {
   font-variant-numeric: tabular-nums;
 }
 
+.task-done-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.25rem;
+  flex: 0 0 auto;
+  width: 6ch;
+  min-width: 6ch;
+  color: #22c55e;
+  text-align: left;
+  font-size: 0.78rem;
+  line-height: 1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
 .task-due-overdue {
   color: #f87171;
 }
@@ -210,6 +226,13 @@ input:disabled {
   display: block;
   width: 0.82rem;
   height: 0.82rem;
+  flex: 0 0 auto;
+}
+
+.task-done-icon {
+  display: block;
+  width: 0.9rem;
+  height: 0.9rem;
   flex: 0 0 auto;
 }
 
@@ -414,6 +437,61 @@ input:disabled {
 .task-form label {
   font-size: 0.86rem;
   color: #cbd5e1;
+}
+
+.task-form-shortcuts {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+}
+
+.task-due-picker {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.task-due-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.task-due-fields input[type="time"] {
+  min-width: 5.25rem;
+}
+
+.task-due-fields select {
+  min-width: 5.25rem;
+}
+
+.task-recurrence-picker {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.task-due-toggle {
+  width: 2.25rem;
+  min-width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+}
+
+.task-due-toggle .bi {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.task-recurrence-toggle {
+  width: 2.25rem;
+  min-width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+}
+
+.task-recurrence-toggle .bi {
+  font-size: 1rem;
+  line-height: 1;
 }
 
 .task-form-actions {

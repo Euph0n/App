@@ -8,8 +8,13 @@ const authOverlay = document.getElementById("authOverlay");
 const taskFormOverlay = document.getElementById("taskFormOverlay");
 const taskFormEl = document.getElementById("taskForm");
 const taskTitleInput = document.getElementById("taskTitleInput");
+const taskDueFields = document.getElementById("taskDueFields");
 const taskDueInput = document.getElementById("taskDueInput");
+const taskDueTimeInput = document.getElementById("taskDueTimeInput");
+const taskDueTimeFallback = document.getElementById("taskDueTimeFallback");
+const toggleDueInputBtn = document.getElementById("toggleDueInputBtn");
 const taskRecurrenceInput = document.getElementById("taskRecurrenceInput");
+const toggleRecurrenceInputBtn = document.getElementById("toggleRecurrenceInputBtn");
 const recurrenceDaysEl = document.getElementById("recurrenceDays");
 const cancelTaskFormBtn = document.getElementById("cancelTaskFormBtn");
 const addTaskBtn = document.getElementById("addTaskBtn");
@@ -91,22 +96,46 @@ function formatDueDuration(value) {
   return duration;
 }
 
-function parseDueDateInput(input) {
-  const trimmed = input.trim();
-  if (!trimmed) {
+function formatCompletedDuration(value) {
+  const completedMs = new Date(value).getTime();
+  if (Number.isNaN(completedMs)) {
+    return "";
+  }
+
+  const diffMs = Date.now() - completedMs;
+  const absMinutes = Math.max(1, Math.round(Math.abs(diffMs) / 60000));
+
+  const days = Math.floor(absMinutes / 1440);
+  const hours = Math.floor(absMinutes / 60);
+  const minutes = absMinutes;
+
+  if (days > 0) {
+    return `${days}j`;
+  }
+  if (hours > 0) {
+    return `${hours}h`;
+  }
+  return `${minutes}m`;
+}
+
+function parseDueDateInput(dateInput, timeInput = "09:00") {
+  const datePart = dateInput.trim();
+  if (!datePart) {
     return { value: null, error: "" };
   }
 
-  const match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?$/);
-  if (!match) {
-    return { value: null, error: "Format d'echeance invalide. Utilisez AAAA-MM-JJ ou AAAA-MM-JJ HH:MM." };
+  const timePart = (timeInput || "09:00").trim();
+  const dateMatch = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const timeMatch = timePart.match(/^(\d{2}):(\d{2})$/);
+  if (!dateMatch || !timeMatch) {
+    return { value: null, error: "Format d'echeance invalide." };
   }
 
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const hours = Number(match[4] ?? "00");
-  const minutes = Number(match[5] ?? "00");
+  const year = Number(dateMatch[1]);
+  const month = Number(dateMatch[2]);
+  const day = Number(dateMatch[3]);
+  const hours = Number(timeMatch[1]);
+  const minutes = Number(timeMatch[2]);
 
   const localDate = new Date(year, month - 1, day, hours, minutes, 0, 0);
   const isValid =
@@ -121,6 +150,104 @@ function parseDueDateInput(input) {
   }
 
   return { value: localDate.toISOString(), error: "" };
+}
+
+function setDueInputExpanded(expanded) {
+  if (!taskDueFields) {
+    return;
+  }
+  taskDueFields.dataset.expanded = expanded ? "true" : "false";
+}
+
+function isDueInputExpanded() {
+  if (!taskDueFields) {
+    return false;
+  }
+  return taskDueFields.dataset.expanded === "true";
+}
+
+function updateDueInputVisibility() {
+  if (!taskDueFields || !taskDueInput || !toggleDueInputBtn) {
+    return;
+  }
+
+  const hasDue = taskDueInput.value.trim().length > 0;
+  const shouldShowInput = hasDue || isDueInputExpanded();
+  taskDueFields.hidden = !shouldShowInput;
+
+  if (!shouldShowInput) {
+    taskDueInput.blur();
+    taskDueTimeInput?.blur();
+  }
+
+  const buttonLabel = hasDue
+    ? "Echeance definie"
+    : shouldShowInput
+      ? "Masquer l'echeance"
+      : "Ajouter une echeance";
+  toggleDueInputBtn.setAttribute("aria-label", buttonLabel);
+  toggleDueInputBtn.title = buttonLabel;
+}
+
+function openDueDatePicker() {
+  if (!taskDueInput) {
+    return;
+  }
+
+  if (typeof taskDueInput.showPicker === "function") {
+    taskDueInput.showPicker();
+    return;
+  }
+
+  taskDueInput.focus();
+  taskDueInput.click();
+}
+
+function openDueTimePicker() {
+  if (!taskDueTimeInput) {
+    return;
+  }
+
+  if (typeof taskDueTimeInput.showPicker === "function") {
+    taskDueTimeInput.showPicker();
+    return;
+  }
+
+  taskDueTimeInput.focus();
+  taskDueTimeInput.click();
+}
+
+function shouldUseDueTimeFallback() {
+  if (!taskDueTimeInput || !taskDueTimeFallback) {
+    return false;
+  }
+  const isDesktop = window.matchMedia && window.matchMedia("(pointer: fine)").matches;
+  const hasNativePicker = typeof taskDueTimeInput.showPicker === "function";
+  return isDesktop && !hasNativePicker;
+}
+
+function syncDueTimeControls() {
+  if (!taskDueTimeInput || !taskDueTimeFallback) {
+    return;
+  }
+
+  const useFallback = shouldUseDueTimeFallback();
+  taskDueTimeFallback.hidden = !useFallback;
+  taskDueTimeInput.hidden = useFallback;
+
+  if (useFallback && taskDueTimeInput.value) {
+    taskDueTimeFallback.value = taskDueTimeInput.value;
+  }
+  if (!useFallback && taskDueTimeFallback.value) {
+    taskDueTimeInput.value = taskDueTimeFallback.value;
+  }
+}
+
+function getDueTimeValue() {
+  if (shouldUseDueTimeFallback() && taskDueTimeFallback) {
+    return taskDueTimeFallback.value || "09:00";
+  }
+  return taskDueTimeInput?.value || "09:00";
 }
 
 function parseRecurrenceRule(rule) {
@@ -191,6 +318,56 @@ function updateRecurrenceDaysVisibility() {
   }
   const isWeekly = taskRecurrenceInput?.value === "weekly";
   recurrenceDaysEl.hidden = !isWeekly;
+}
+
+function setRecurrenceInputExpanded(expanded) {
+  if (!taskRecurrenceInput) {
+    return;
+  }
+  taskRecurrenceInput.dataset.expanded = expanded ? "true" : "false";
+}
+
+function isRecurrenceInputExpanded() {
+  if (!taskRecurrenceInput) {
+    return false;
+  }
+  return taskRecurrenceInput.dataset.expanded === "true";
+}
+
+function updateRecurrenceInputVisibility() {
+  if (!taskRecurrenceInput || !toggleRecurrenceInputBtn) {
+    return;
+  }
+
+  const hasRecurrence = taskRecurrenceInput.value.trim().length > 0;
+  const shouldShowInput = hasRecurrence || isRecurrenceInputExpanded();
+  taskRecurrenceInput.hidden = !shouldShowInput;
+
+  if (!shouldShowInput) {
+    taskRecurrenceInput.blur();
+  }
+
+  const buttonLabel = hasRecurrence
+    ? "Recurrence definie"
+    : shouldShowInput
+      ? "Masquer la recurrence"
+      : "Ajouter une recurrence";
+  toggleRecurrenceInputBtn.setAttribute("aria-label", buttonLabel);
+  toggleRecurrenceInputBtn.title = buttonLabel;
+}
+
+function openRecurrencePicker() {
+  if (!taskRecurrenceInput) {
+    return;
+  }
+
+  if (typeof taskRecurrenceInput.showPicker === "function") {
+    taskRecurrenceInput.showPicker();
+    return;
+  }
+
+  taskRecurrenceInput.focus();
+  taskRecurrenceInput.click();
 }
 
 function getNextDueAtIso(currentDueAt, recurrenceRule) {
@@ -418,7 +595,29 @@ function renderTask(task) {
   const rightMeta = document.createElement("div");
   rightMeta.className = "task-right-meta";
 
-  if (task.due_at) {
+  if (isDone) {
+    const doneInline = document.createElement("span");
+    doneInline.className = "task-done-inline";
+    const completedDuration = task.completed_at ? formatCompletedDuration(task.completed_at) : "";
+    doneInline.title = task.completed_at ? `Terminee depuis: ${formatDate(task.completed_at)}` : "Tache terminee";
+    doneInline.innerHTML = `
+      <svg
+        class="task-done-icon"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="14"
+        height="14"
+        aria-hidden="true"
+      >
+        <path
+          fill="currentColor"
+          d="M9.55 18.2a1 1 0 0 1-.7-.29l-4.56-4.56a1 1 0 0 1 1.42-1.42l3.84 3.85 8.74-8.74a1 1 0 1 1 1.42 1.41l-9.45 9.45a1 1 0 0 1-.71.3z"
+        />
+      </svg>
+      <span>${completedDuration}</span>
+    `;
+    rightMeta.appendChild(doneInline);
+  } else if (task.due_at) {
     const dueInline = document.createElement("span");
     dueInline.className = "task-due-inline";
     const dueMs = new Date(task.due_at).getTime();
@@ -502,6 +701,29 @@ function renderFilteredTasks() {
     return true;
     })
     .sort((a, b) => {
+      const rank = (status) => {
+        if (status === "pending") {
+          return 0;
+        }
+        if (status === "done") {
+          return 1;
+        }
+        return 2;
+      };
+
+      const statusDelta = rank(a.status) - rank(b.status);
+      if (statusDelta !== 0) {
+        return statusDelta;
+      }
+
+      if (a.status === "done" && b.status === "done") {
+        const completedA = a.completed_at ? new Date(a.completed_at).getTime() : 0;
+        const completedB = b.completed_at ? new Date(b.completed_at).getTime() : 0;
+        if (completedA !== completedB) {
+          return completedB - completedA;
+        }
+      }
+
       const dueA = a.due_at ? new Date(a.due_at).getTime() : Number.POSITIVE_INFINITY;
       const dueB = b.due_at ? new Date(b.due_at).getTime() : Number.POSITIVE_INFINITY;
       if (dueA !== dueB) {
@@ -560,6 +782,17 @@ function resetTaskForm() {
     return;
   }
   taskFormEl.reset();
+  if (taskDueTimeInput) {
+    taskDueTimeInput.value = "09:00";
+  }
+  if (taskDueTimeFallback) {
+    taskDueTimeFallback.value = "09:00";
+  }
+  syncDueTimeControls();
+  setDueInputExpanded(false);
+  updateDueInputVisibility();
+  setRecurrenceInputExpanded(false);
+  updateRecurrenceInputVisibility();
   if (recurrenceDaysEl) {
     recurrenceDaysEl.querySelectorAll(".recurrence-day-btn").forEach((btn) => {
       btn.setAttribute("aria-pressed", "false");
@@ -572,6 +805,11 @@ function openTaskForm() {
   if (!taskFormOverlay || !taskFormEl || !taskTitleInput) {
     return;
   }
+  syncDueTimeControls();
+  setDueInputExpanded(false);
+  updateDueInputVisibility();
+  setRecurrenceInputExpanded(false);
+  updateRecurrenceInputVisibility();
   updateRecurrenceDaysVisibility();
   taskFormOverlay.hidden = false;
   taskTitleInput.focus();
@@ -991,8 +1229,9 @@ if (taskFormEl) {
       return;
     }
 
-    const dueRaw = taskDueInput?.value ?? "";
-    const parsedDue = parseDueDateInput(dueRaw);
+    const dueDateRaw = taskDueInput?.value ?? "";
+    const dueTimeRaw = getDueTimeValue();
+    const parsedDue = parseDueDateInput(dueDateRaw, dueTimeRaw);
     if (parsedDue.error) {
       setStatus(parsedDue.error, true);
       return;
@@ -1010,9 +1249,48 @@ if (taskFormEl) {
   });
 }
 
+if (toggleDueInputBtn && taskDueInput) {
+  toggleDueInputBtn.addEventListener("click", () => {
+    setDueInputExpanded(true);
+    updateDueInputVisibility();
+    openDueDatePicker();
+  });
+
+  taskDueInput.addEventListener("input", () => {
+    setDueInputExpanded(taskDueInput.value.trim().length > 0);
+    updateDueInputVisibility();
+    if (taskDueInput.value.trim().length > 0) {
+      if (shouldUseDueTimeFallback() && taskDueTimeFallback) {
+        taskDueTimeFallback.focus();
+      } else {
+        openDueTimePicker();
+      }
+    }
+  });
+}
+
+if (taskDueTimeInput && taskDueTimeFallback) {
+  taskDueTimeInput.addEventListener("input", () => {
+    taskDueTimeFallback.value = taskDueTimeInput.value || "09:00";
+  });
+  taskDueTimeFallback.addEventListener("change", () => {
+    taskDueTimeInput.value = taskDueTimeFallback.value || "09:00";
+  });
+}
+
 if (taskRecurrenceInput) {
   taskRecurrenceInput.addEventListener("change", () => {
+    setRecurrenceInputExpanded(taskRecurrenceInput.value.trim().length > 0);
+    updateRecurrenceInputVisibility();
     updateRecurrenceDaysVisibility();
+  });
+}
+
+if (toggleRecurrenceInputBtn && taskRecurrenceInput) {
+  toggleRecurrenceInputBtn.addEventListener("click", () => {
+    setRecurrenceInputExpanded(true);
+    updateRecurrenceInputVisibility();
+    openRecurrencePicker();
   });
 }
 
@@ -1063,6 +1341,11 @@ if (toggleHistoryBtn) {
 
 setAddTaskEnabled(false);
 applyFilterButtonState();
+syncDueTimeControls();
+setDueInputExpanded(false);
+updateDueInputVisibility();
+setRecurrenceInputExpanded(false);
+updateRecurrenceInputVisibility();
 resetTaskList("Connectez-vous pour voir vos taches.");
 void initSupabase();
 
