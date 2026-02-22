@@ -6,11 +6,16 @@ const accountInfoEl = document.getElementById("accountInfo");
 const installBtn = document.getElementById("installBtn");
 const authOverlay = document.getElementById("authOverlay");
 const addTaskBtn = document.getElementById("addTaskBtn");
+const togglePendingBtn = document.getElementById("togglePendingBtn");
+const toggleHistoryBtn = document.getElementById("toggleHistoryBtn");
 const taskListEl = document.getElementById("taskList");
 
 let supabaseClient;
 let currentUser = null;
 let deferredInstallPrompt = null;
+let showPending = true;
+let showHistory = true;
+let allTasks = [];
 
 const SUPABASE_URL = "https://pikgsutwilxhblphynax.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpa2dzdXR3aWx4aGJscGh5bmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NjY1NDcsImV4cCI6MjA4NzI0MjU0N30.gCPo21F6gpAGokux0CfgR_JDNHBr8vGOtiFdF6mQ4qY";
@@ -29,6 +34,15 @@ function setAddTaskEnabled(enabled) {
 
 function resetTaskList(message) {
   taskListEl.innerHTML = `<li>${message}</li>`;
+}
+
+function applyFilterButtonState() {
+  if (togglePendingBtn) {
+    togglePendingBtn.setAttribute("aria-pressed", String(showPending));
+  }
+  if (toggleHistoryBtn) {
+    toggleHistoryBtn.setAttribute("aria-pressed", String(showHistory));
+  }
 }
 
 function formatDate(value) {
@@ -58,6 +72,31 @@ function renderTask(task) {
   }
 
   return item;
+}
+
+function renderFilteredTasks() {
+  taskListEl.replaceChildren();
+
+  const filtered = allTasks.filter((task) => {
+    if (task.status === "pending") {
+      return showPending;
+    }
+    if (task.status === "done") {
+      return showHistory;
+    }
+    return true;
+  });
+
+  filtered.forEach((task) => taskListEl.appendChild(renderTask(task)));
+
+  if (!allTasks.length) {
+    taskListEl.innerHTML = "<li>Aucune tache.</li>";
+    return;
+  }
+
+  if (!filtered.length) {
+    taskListEl.innerHTML = "<li>Aucune tache pour ce filtre.</li>";
+  }
 }
 
 function authDbHint(operation) {
@@ -132,12 +171,8 @@ async function fetchTasks() {
     return;
   }
 
-  taskListEl.replaceChildren();
-  data.forEach((task) => taskListEl.appendChild(renderTask(task)));
-
-  if (!data.length) {
-    taskListEl.innerHTML = "<li>Aucune tache.</li>";
-  }
+  allTasks = data;
+  renderFilteredTasks();
 }
 
 async function addTask(title) {
@@ -208,6 +243,7 @@ async function handleSession(session) {
   currentUser = session?.user ?? null;
 
   if (!currentUser) {
+    allTasks = [];
     if (settingsMenu) {
       settingsMenu.hidden = true;
       settingsMenu.open = false;
@@ -366,7 +402,24 @@ if (addTaskBtn) {
   });
 }
 
+if (togglePendingBtn) {
+  togglePendingBtn.addEventListener("click", () => {
+    showPending = !showPending;
+    applyFilterButtonState();
+    renderFilteredTasks();
+  });
+}
+
+if (toggleHistoryBtn) {
+  toggleHistoryBtn.addEventListener("click", () => {
+    showHistory = !showHistory;
+    applyFilterButtonState();
+    renderFilteredTasks();
+  });
+}
+
 setAddTaskEnabled(false);
+applyFilterButtonState();
 resetTaskList("Connectez-vous pour voir vos taches.");
 void initSupabase();
 
