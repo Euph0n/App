@@ -15,9 +15,14 @@
   <body>
     <main class="app">
       <header>
-        <div class="topbar">
-          <h1>Gestionnaire de taches</h1>
-          <div class="auth-row compact">
+        <h1>Gestionnaire de taches</h1>
+      </header>
+
+      <section class="task-workspace">
+        <div class="section-head">
+          <h2>Gestionnaire de taches</h2>
+          <div class="section-actions">
+            <button id="addTaskBtn" type="button" class="add-task-btn" aria-label="Ajouter une tache">+</button>
             <details id="settingsMenu" class="settings-menu" hidden>
               <summary class="secondary settings-trigger" aria-label="Parametres">
                 <svg
@@ -42,18 +47,9 @@
             </details>
           </div>
         </div>
-      </header>
-
-      <section class="card">
-        <div class="section-head">
-          <h2>Taches en cours</h2>
-          <button id="addTaskBtn" type="button" class="add-task-btn" aria-label="Ajouter une tache">+</button>
-        </div>
+        <h3 class="list-title">Taches en cours</h3>
         <ul id="pendingTasks" class="task-list"></ul>
-      </section>
-
-      <section class="card">
-        <h2>Historique des taches acquittees</h2>
+        <h3 class="list-title">Historique des taches acquittees</h3>
         <ul id="historyTasks" class="task-list"></ul>
       </section>
 

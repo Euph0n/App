@@ -20,18 +20,7 @@ header h1 {
   font-size: 1.35rem;
 }
 
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.card {
-  background: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 12px;
-  padding: 1rem;
+.task-workspace {
   margin-top: 1rem;
 }
 
@@ -45,6 +34,17 @@ header h1 {
 
 .section-head h2 {
   margin: 0;
+}
+
+.section-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.list-title {
+  margin: 0.2rem 0 0.55rem;
+  font-size: 1rem;
 }
 
 form,
@@ -244,11 +244,6 @@ input:disabled {
 }
 
 @media (max-width: 640px) {
-  .topbar {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
   .settings-panel {
     left: 0;
     right: auto;
