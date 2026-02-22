@@ -6,19 +6,11 @@ const accountInfoEl = document.getElementById("accountInfo");
 const installBtn = document.getElementById("installBtn");
 const authOverlay = document.getElementById("authOverlay");
 const addTaskBtn = document.getElementById("addTaskBtn");
-const togglePendingBtn = document.getElementById("togglePendingBtn");
-const toggleHistoryBtn = document.getElementById("toggleHistoryBtn");
-const tasksBlockEl = document.getElementById("tasksBlock");
-const pendingSectionEl = document.getElementById("pendingSection");
-const pendingTasksEl = document.getElementById("pendingTasks");
-const historySectionEl = document.getElementById("historySection");
-const historyTasksEl = document.getElementById("historyTasks");
+const taskListEl = document.getElementById("taskList");
 
 let supabaseClient;
 let currentUser = null;
 let deferredInstallPrompt = null;
-let showPending = true;
-let showHistory = false;
 
 const SUPABASE_URL = "https://pikgsutwilxhblphynax.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpa2dzdXR3aWx4aGJscGh5bmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NjY1NDcsImV4cCI6MjA4NzI0MjU0N30.gCPo21F6gpAGokux0CfgR_JDNHBr8vGOtiFdF6mQ4qY";
@@ -35,41 +27,8 @@ function setAddTaskEnabled(enabled) {
   addTaskBtn.disabled = !enabled;
 }
 
-function applyTaskView() {
-  if (!historySectionEl || !toggleHistoryBtn || !pendingSectionEl || !togglePendingBtn) {
-    return;
-  }
-
-  pendingSectionEl.hidden = !showPending;
-  historySectionEl.hidden = !showHistory;
-  if (tasksBlockEl) {
-    tasksBlockEl.hidden = !showPending && !showHistory;
-  }
-
-  const pendingLabel = showPending ? "Masquer taches en cours" : "Afficher taches en cours";
-  togglePendingBtn.setAttribute("aria-pressed", String(showPending));
-  togglePendingBtn.setAttribute("aria-label", pendingLabel);
-  togglePendingBtn.title = pendingLabel;
-
-  const historyLabel = showHistory ? "Masquer historique" : "Afficher historique";
-  toggleHistoryBtn.setAttribute("aria-pressed", String(showHistory));
-  toggleHistoryBtn.setAttribute("aria-label", historyLabel);
-  toggleHistoryBtn.title = historyLabel;
-}
-
-function togglePendingVisibility() {
-  showPending = !showPending;
-  applyTaskView();
-}
-
-function toggleHistoryVisibility() {
-  showHistory = !showHistory;
-  applyTaskView();
-}
-
-function resetTaskLists(message) {
-  pendingTasksEl.innerHTML = `<li>${message}</li>`;
-  historyTasksEl.innerHTML = `<li>${message}</li>`;
+function resetTaskList(message) {
+  taskListEl.innerHTML = `<li>${message}</li>`;
 }
 
 function formatDate(value) {
@@ -79,18 +38,19 @@ function formatDate(value) {
   }).format(new Date(value));
 }
 
-function renderTask(task, history = false) {
+function renderTask(task) {
   const item = document.createElement("li");
   item.className = "task-item";
+  const isDone = task.status === "done";
 
   const content = document.createElement("div");
   content.innerHTML = `<strong>${task.title}</strong><div class="task-meta">Creee le ${formatDate(
     task.created_at
-  )}${history ? ` - Acquittee le ${formatDate(task.completed_at)}` : ""}</div>`;
+  )}${isDone && task.completed_at ? ` - Acquittee le ${formatDate(task.completed_at)}` : ""}</div>`;
 
   item.appendChild(content);
 
-  if (!history) {
+  if (!isDone) {
     const button = document.createElement("button");
     button.textContent = "Acquitter";
     button.addEventListener("click", () => acknowledgeTask(task.id));
@@ -156,7 +116,7 @@ function setAccountInfo(user) {
 
 async function fetchTasks() {
   if (!supabaseClient || !currentUser) {
-    resetTaskLists("Connectez-vous pour voir vos taches.");
+    resetTaskList("Connectez-vous pour voir vos taches.");
     return;
   }
 
@@ -172,21 +132,11 @@ async function fetchTasks() {
     return;
   }
 
-  pendingTasksEl.replaceChildren();
-  historyTasksEl.replaceChildren();
+  taskListEl.replaceChildren();
+  data.forEach((task) => taskListEl.appendChild(renderTask(task)));
 
-  const pending = data.filter((task) => task.status === "pending");
-  const history = data.filter((task) => task.status === "done");
-
-  pending.forEach((task) => pendingTasksEl.appendChild(renderTask(task)));
-  history.forEach((task) => historyTasksEl.appendChild(renderTask(task, true)));
-
-  if (!pending.length) {
-    pendingTasksEl.innerHTML = "<li>Aucune tache en cours.</li>";
-  }
-
-  if (!history.length) {
-    historyTasksEl.innerHTML = "<li>Historique vide.</li>";
+  if (!data.length) {
+    taskListEl.innerHTML = "<li>Aucune tache.</li>";
   }
 }
 
@@ -265,7 +215,7 @@ async function handleSession(session) {
     setAccountInfo(null);
     logoutBtn.hidden = true;
     setAddTaskEnabled(false);
-    resetTaskLists("Connectez-vous pour voir vos taches.");
+    resetTaskList("Connectez-vous pour voir vos taches.");
     showAuthOverlay();
     return;
   }
@@ -416,21 +366,8 @@ if (addTaskBtn) {
   });
 }
 
-if (togglePendingBtn) {
-  togglePendingBtn.addEventListener("click", () => {
-    togglePendingVisibility();
-  });
-}
-
-if (toggleHistoryBtn) {
-  toggleHistoryBtn.addEventListener("click", () => {
-    toggleHistoryVisibility();
-  });
-}
-
 setAddTaskEnabled(false);
-applyTaskView();
-resetTaskLists("Connectez-vous pour voir vos taches.");
+resetTaskList("Connectez-vous pour voir vos taches.");
 void initSupabase();
 
 window.addEventListener("focus", () => {
