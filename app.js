@@ -15,7 +15,6 @@ let deferredInstallPrompt = null;
 
 const SUPABASE_URL = "https://pikgsutwilxhblphynax.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpa2dzdXR3aWx4aGJscGh5bmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NjY1NDcsImV4cCI6MjA4NzI0MjU0N30.gCPo21F6gpAGokux0CfgR_JDNHBr8vGOtiFdF6mQ4qY";
-const SW_VERSION = "2026-02-22-1";
 
 function setStatus(message, isError = false) {
   statusEl.textContent = message;
@@ -396,7 +395,6 @@ document.addEventListener("visibilitychange", () => {
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     let didRefreshForUpdate = false;
-    const serviceWorkerUrl = `./sw.js?v=${SW_VERSION}`;
 
     navigator.serviceWorker.addEventListener("controllerchange", () => {
       if (didRefreshForUpdate) {
@@ -407,7 +405,7 @@ if ("serviceWorker" in navigator) {
     });
 
     navigator.serviceWorker
-      .register(serviceWorkerUrl, { updateViaCache: "none" })
+      .register("./sw.js", { updateViaCache: "none" })
       .then(async (registration) => {
         await registration.update();
 
