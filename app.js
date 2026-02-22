@@ -204,7 +204,6 @@ async function acknowledgeTask(id) {
     return;
   }
 
-  setStatus("Tache acquittee.");
   await fetchTasks();
 }
 
