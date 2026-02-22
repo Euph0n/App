@@ -159,10 +159,26 @@ input:disabled {
   color: #f8fafc;
 }
 
-.task-date-cell,
+.task-details-toggle-cell,
 .task-action-cell {
   white-space: nowrap;
   color: #cbd5e1;
+  width: 1%;
+}
+
+.task-details-cell {
+  background: #111827;
+}
+
+.task-details-content {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: #cbd5e1;
+}
+
+.task-details-content strong {
+  color: #f8fafc;
 }
 
 .task-empty {

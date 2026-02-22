@@ -33,7 +33,7 @@ function setAddTaskEnabled(enabled) {
 }
 
 function resetTaskTable(message) {
-  taskTableBodyEl.innerHTML = `<tr><td class="task-empty" colspan="4">${message}</td></tr>`;
+  taskTableBodyEl.innerHTML = `<tr><td class="task-empty" colspan="3">${message}</td></tr>`;
 }
 
 function applyFilterButtonState() {
@@ -52,24 +52,52 @@ function formatDate(value) {
   }).format(new Date(value));
 }
 
+function getDetailsToggleIcon(open) {
+  const path = open
+    ? "M5 11a1 1 0 0 0 0 2h14a1 1 0 1 0 0-2H5z"
+    : "M11 5a1 1 0 1 1 2 0v6h6a1 1 0 1 1 0 2h-6v6a1 1 0 1 1-2 0v-6H5a1 1 0 1 1 0-2h6z";
+  return `
+    <svg
+      class="action-icon"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      aria-hidden="true"
+    >
+      <path fill="currentColor" d="${path}" />
+    </svg>
+  `;
+}
+
+function setDetailsToggleState(button, open) {
+  const label = open ? "Masquer les details" : "Afficher les details";
+  button.setAttribute("aria-expanded", String(open));
+  button.setAttribute("aria-label", label);
+  button.title = label;
+  button.innerHTML = getDetailsToggleIcon(open);
+}
+
 function renderTask(task) {
+  const fragment = document.createDocumentFragment();
   const row = document.createElement("tr");
   const isDone = task.status === "done";
+  const detailsId = `task-details-${task.id}`;
 
   const titleCell = document.createElement("td");
   titleCell.className = "task-title-cell";
   titleCell.textContent = task.title;
   row.appendChild(titleCell);
 
-  const createdCell = document.createElement("td");
-  createdCell.className = "task-date-cell";
-  createdCell.textContent = formatDate(task.created_at);
-  row.appendChild(createdCell);
-
-  const completedCell = document.createElement("td");
-  completedCell.className = "task-date-cell";
-  completedCell.textContent = isDone && task.completed_at ? formatDate(task.completed_at) : "-";
-  row.appendChild(completedCell);
+  const detailsToggleCell = document.createElement("td");
+  detailsToggleCell.className = "task-details-toggle-cell";
+  const detailsToggleBtn = document.createElement("button");
+  detailsToggleBtn.type = "button";
+  detailsToggleBtn.className = "secondary icon-btn task-details-btn";
+  detailsToggleBtn.setAttribute("aria-controls", detailsId);
+  setDetailsToggleState(detailsToggleBtn, false);
+  detailsToggleCell.appendChild(detailsToggleBtn);
+  row.appendChild(detailsToggleCell);
 
   const actionCell = document.createElement("td");
   actionCell.className = "task-action-cell";
@@ -101,7 +129,29 @@ function renderTask(task) {
   }
 
   row.appendChild(actionCell);
-  return row;
+
+  const detailsRow = document.createElement("tr");
+  detailsRow.id = detailsId;
+  detailsRow.className = "task-details-row";
+  detailsRow.hidden = true;
+
+  const detailsCell = document.createElement("td");
+  detailsCell.className = "task-details-cell";
+  detailsCell.colSpan = 3;
+  const createdAt = formatDate(task.created_at);
+  const completedAt = isDone && task.completed_at ? formatDate(task.completed_at) : "Non acquittee";
+  detailsCell.innerHTML = `<div class="task-details-content"><div><strong>Creee le:</strong> ${createdAt}</div><div><strong>Acquittee le:</strong> ${completedAt}</div></div>`;
+  detailsRow.appendChild(detailsCell);
+
+  detailsToggleBtn.addEventListener("click", () => {
+    const open = detailsRow.hidden;
+    detailsRow.hidden = !open;
+    setDetailsToggleState(detailsToggleBtn, open);
+  });
+
+  fragment.appendChild(row);
+  fragment.appendChild(detailsRow);
+  return fragment;
 }
 
 function renderFilteredTasks() {
