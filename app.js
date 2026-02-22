@@ -2,6 +2,7 @@
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const settingsMenu = document.getElementById("settingsMenu");
+const accountInfoEl = document.getElementById("accountInfo");
 const installBtn = document.getElementById("installBtn");
 const authOverlay = document.getElementById("authOverlay");
 const taskForm = document.getElementById("taskForm");
@@ -91,6 +92,13 @@ function closeAuthOverlay() {
     return;
   }
   authOverlay.hidden = true;
+}
+
+function getUserIdentity(user) {
+  if (!user) {
+    return "";
+  }
+  return user.email || user.user_metadata?.full_name || user.id;
 }
 
 async function fetchTasks() {
@@ -202,6 +210,9 @@ async function handleSession(session) {
       settingsMenu.hidden = true;
       settingsMenu.open = false;
     }
+    if (accountInfoEl) {
+      accountInfoEl.textContent = "";
+    }
     logoutBtn.hidden = true;
     setTaskInputEnabled(false);
     resetTaskLists("Connectez-vous pour voir vos taches.");
@@ -211,6 +222,9 @@ async function handleSession(session) {
 
   if (settingsMenu) {
     settingsMenu.hidden = false;
+  }
+  if (accountInfoEl) {
+    accountInfoEl.textContent = `Compte: ${getUserIdentity(currentUser)}`;
   }
   logoutBtn.hidden = false;
   setTaskInputEnabled(true);
