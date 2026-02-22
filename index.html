@@ -15,22 +15,16 @@
   <body>
     <main class="app">
       <header>
-        <h1>TaskFlow Gratuit</h1>
-        <p>
-          Gerez vos taches et leur historique depuis n'importe quel ordinateur grace
-          a une base cloud gratuite (Supabase).
-        </p>
-      </header>
-
-      <section class="card">
-        <h2>Connexion</h2>
-        <p id="authState">Session en cours de verification...</p>
-        <div class="auth-row">
+        <div class="topbar">
+          <h1>Gestionnaire de taches</h1>
+          <div class="auth-row compact">
           <button id="loginBtn" type="button">Se connecter avec Google</button>
-          <button id="logoutBtn" type="button" class="secondary" hidden>Se deconnecter</button>
-          <button id="installBtn" type="button" class="secondary" hidden>Installer l'app</button>
+            <button id="logoutBtn" type="button" class="secondary" hidden>Deconnexion</button>
+            <button id="installBtn" type="button" class="secondary" hidden>Installer</button>
+          </div>
         </div>
-      </section>
+        <p id="authState" class="auth-state">Session en cours de verification...</p>
+      </header>
 
       <section class="card">
         <h2>Nouvelle tache</h2>

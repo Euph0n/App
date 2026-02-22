@@ -16,7 +16,15 @@ body {
 }
 
 header h1 {
-  margin-bottom: 0.25rem;
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
 }
 
 .card {
@@ -98,6 +106,20 @@ input:disabled {
   opacity: 0.8;
 }
 
+.auth-state {
+  margin: 0.5rem 0 0;
+  opacity: 0.85;
+}
+
+.auth-row.compact {
+  gap: 0.5rem;
+}
+
+.auth-row.compact button {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.85rem;
+}
+
 #status {
   margin-top: 1rem;
   min-height: 1.5rem;
@@ -106,5 +128,12 @@ input:disabled {
 @media (display-mode: standalone) {
   #installBtn {
     display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
