@@ -106,11 +106,6 @@ input:disabled {
   opacity: 0.8;
 }
 
-.auth-state {
-  margin: 0.5rem 0 0;
-  opacity: 0.85;
-}
-
 .auth-row.compact {
   gap: 0.5rem;
 }
@@ -118,6 +113,44 @@ input:disabled {
 .auth-row.compact button {
   padding: 0.35rem 0.6rem;
   font-size: 0.85rem;
+}
+
+.settings-menu {
+  position: relative;
+}
+
+.settings-menu > summary {
+  list-style: none;
+  border-radius: 8px;
+  border: 0;
+  padding: 0.35rem 0.6rem;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.settings-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.settings-panel {
+  position: absolute;
+  right: 0;
+  margin-top: 0.45rem;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  background: #1e293b;
+  padding: 0.5rem;
+  min-width: 150px;
+  display: grid;
+  gap: 0.4rem;
+  z-index: 20;
+}
+
+.settings-panel button {
+  width: 100%;
+  text-align: left;
 }
 
 #status {
@@ -164,5 +197,10 @@ input:disabled {
   .topbar {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .settings-panel {
+    left: 0;
+    right: auto;
   }
 }

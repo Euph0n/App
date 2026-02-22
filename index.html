@@ -18,11 +18,15 @@
         <div class="topbar">
           <h1>Gestionnaire de taches</h1>
           <div class="auth-row compact">
-            <button id="logoutBtn" type="button" class="secondary" hidden>Deconnexion</button>
-            <button id="installBtn" type="button" class="secondary" hidden>Installer</button>
+            <details id="settingsMenu" class="settings-menu" hidden>
+              <summary class="secondary">Parametres</summary>
+              <div class="settings-panel">
+                <button id="logoutBtn" type="button" class="secondary">Deconnexion</button>
+                <button id="installBtn" type="button" class="secondary" hidden>Installer</button>
+              </div>
+            </details>
           </div>
         </div>
-        <p id="authState" class="auth-state">Session en cours de verification...</p>
       </header>
 
       <section class="card">

@@ -1,7 +1,7 @@
 ﻿const statusEl = document.getElementById("status");
-const authStateEl = document.getElementById("authState");
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
+const settingsMenu = document.getElementById("settingsMenu");
 const installBtn = document.getElementById("installBtn");
 const authOverlay = document.getElementById("authOverlay");
 const taskForm = document.getElementById("taskForm");
@@ -198,7 +198,10 @@ async function handleSession(session) {
   currentUser = session?.user ?? null;
 
   if (!currentUser) {
-    authStateEl.textContent = "Non connecte.";
+    if (settingsMenu) {
+      settingsMenu.hidden = true;
+      settingsMenu.open = false;
+    }
     logoutBtn.hidden = true;
     setTaskInputEnabled(false);
     resetTaskLists("Connectez-vous pour voir vos taches.");
@@ -206,8 +209,9 @@ async function handleSession(session) {
     return;
   }
 
-  const identity = currentUser.email || currentUser.user_metadata?.full_name || currentUser.id;
-  authStateEl.textContent = `Connecte: ${identity}`;
+  if (settingsMenu) {
+    settingsMenu.hidden = false;
+  }
   logoutBtn.hidden = false;
   setTaskInputEnabled(true);
   closeAuthOverlay();
@@ -277,6 +281,9 @@ logoutBtn.addEventListener("click", () => {
     return;
   }
 
+  if (settingsMenu) {
+    settingsMenu.open = false;
+  }
   void signOut();
 });
 
