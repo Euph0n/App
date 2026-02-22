@@ -1,6 +1,6 @@
 const CACHE_NAME = "taskflow-cache";
 const LEGACY_CACHE_PREFIX = "taskflow-cache-";
-const ASSETS = ["./", "./index.html", "./app.js", "./manifest.webmanifest", "./icon.svg"];
+const ASSETS = ["./", "./index.html", "./app.js", "./manifest.webmanifest", "./icon.svg", "./icon-maskable.svg"];
 const NETWORK_FIRST_DESTINATIONS = new Set(["script", "style", "worker", "document"]);
 
 self.addEventListener("install", (event) => {
