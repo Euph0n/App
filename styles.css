@@ -104,6 +104,18 @@ button.secondary {
   justify-content: center;
 }
 
+.icon-btn[aria-pressed="true"] {
+  background: #22c55e;
+  color: #052e16;
+  border-color: #16a34a;
+}
+
+.icon-btn[aria-pressed="false"] {
+  background: #334155;
+  color: #cbd5e1;
+  border-color: #475569;
+}
+
 .action-icon {
   display: block;
 }

@@ -54,27 +54,11 @@ function applyTaskView() {
 }
 
 function togglePendingVisibility() {
-  if (!showPending && !showHistory) {
-    showHistory = true;
-  }
-
-  if (showPending && !showHistory) {
-    return;
-  }
-
   showPending = !showPending;
   applyTaskView();
 }
 
 function toggleHistoryVisibility() {
-  if (!showPending && !showHistory) {
-    showPending = true;
-  }
-
-  if (showHistory && !showPending) {
-    return;
-  }
-
   showHistory = !showHistory;
   applyTaskView();
 }
