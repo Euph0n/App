@@ -1,7 +1,9 @@
 :root {
   color-scheme: light dark;
   font-family: Inter, system-ui, sans-serif;
-  --action-btn-size: 2vw;
+  --action-btn-size: clamp(2rem, 2.6vw, 2.6rem);
+  --task-row-height: clamp(2.25rem, 2.6vw, 3rem);
+  --task-title-size: clamp(0.95rem, 1.2vw, 1.2rem);
 }
 
 body {
@@ -161,12 +163,12 @@ input:disabled {
   align-items: center;
   justify-content: space-between;
   gap: 0.6rem;
-  height: 2.6vw;
+  min-height: var(--task-row-height);
   padding: 0 0.75rem;
 }
 
 .task-title {
-  font-size: 1.2vw;
+  font-size: var(--task-title-size);
   font-weight: 600;
   color: #f8fafc;
   line-height: 1.15;
