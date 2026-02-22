@@ -125,7 +125,13 @@ function renderTask(task) {
     button.addEventListener("click", () => acknowledgeTask(task.id));
     actionCell.appendChild(button);
   } else {
-    actionCell.textContent = "-";
+    const doneCheckbox = document.createElement("input");
+    doneCheckbox.type = "checkbox";
+    doneCheckbox.checked = true;
+    doneCheckbox.disabled = true;
+    doneCheckbox.className = "task-done-checkbox";
+    doneCheckbox.setAttribute("aria-label", "Tache acquittee");
+    actionCell.appendChild(doneCheckbox);
   }
 
   row.appendChild(actionCell);
