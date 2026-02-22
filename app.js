@@ -8,6 +8,7 @@ const authOverlay = document.getElementById("authOverlay");
 const addTaskBtn = document.getElementById("addTaskBtn");
 const togglePendingBtn = document.getElementById("togglePendingBtn");
 const toggleHistoryBtn = document.getElementById("toggleHistoryBtn");
+const tasksBlockEl = document.getElementById("tasksBlock");
 const pendingSectionEl = document.getElementById("pendingSection");
 const pendingTasksEl = document.getElementById("pendingTasks");
 const historySectionEl = document.getElementById("historySection");
@@ -41,6 +42,9 @@ function applyTaskView() {
 
   pendingSectionEl.hidden = !showPending;
   historySectionEl.hidden = !showHistory;
+  if (tasksBlockEl) {
+    tasksBlockEl.hidden = !showPending && !showHistory;
+  }
 
   const pendingLabel = showPending ? "Masquer taches en cours" : "Afficher taches en cours";
   togglePendingBtn.setAttribute("aria-pressed", String(showPending));
