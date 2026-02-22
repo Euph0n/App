@@ -126,6 +126,23 @@
           <label for="taskDueInput">Echeance (optionnel)</label>
           <input id="taskDueInput" name="due_at" type="datetime-local" />
 
+          <label for="taskRecurrenceInput">Recurrence</label>
+          <select id="taskRecurrenceInput" name="recurrence">
+            <option value="">Aucune</option>
+            <option value="daily">Quotidienne</option>
+            <option value="weekly">Hebdomadaire (jours)</option>
+            <option value="monthly">Mensuelle</option>
+          </select>
+          <div id="recurrenceDays" class="recurrence-days" hidden>
+            <button type="button" class="secondary recurrence-day-btn" data-day="1" aria-pressed="false">L</button>
+            <button type="button" class="secondary recurrence-day-btn" data-day="2" aria-pressed="false">M</button>
+            <button type="button" class="secondary recurrence-day-btn" data-day="3" aria-pressed="false">M</button>
+            <button type="button" class="secondary recurrence-day-btn" data-day="4" aria-pressed="false">J</button>
+            <button type="button" class="secondary recurrence-day-btn" data-day="5" aria-pressed="false">V</button>
+            <button type="button" class="secondary recurrence-day-btn" data-day="6" aria-pressed="false">S</button>
+            <button type="button" class="secondary recurrence-day-btn" data-day="0" aria-pressed="false">D</button>
+          </div>
+
           <div class="task-form-actions">
             <button id="cancelTaskFormBtn" type="button" class="secondary">Annuler</button>
             <button id="submitTaskFormBtn" type="submit">Ajouter</button>

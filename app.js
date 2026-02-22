@@ -9,6 +9,8 @@ const taskFormOverlay = document.getElementById("taskFormOverlay");
 const taskFormEl = document.getElementById("taskForm");
 const taskTitleInput = document.getElementById("taskTitleInput");
 const taskDueInput = document.getElementById("taskDueInput");
+const taskRecurrenceInput = document.getElementById("taskRecurrenceInput");
+const recurrenceDaysEl = document.getElementById("recurrenceDays");
 const cancelTaskFormBtn = document.getElementById("cancelTaskFormBtn");
 const addTaskBtn = document.getElementById("addTaskBtn");
 const togglePendingBtn = document.getElementById("togglePendingBtn");
@@ -22,6 +24,8 @@ let showPending = true;
 let showHistory = true;
 let allTasks = [];
 let supportsDueDate = true;
+let supportsRecurrence = true;
+const WEEKDAY_LABELS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
 
 const SUPABASE_URL = "https://pikgsutwilxhblphynax.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpa2dzdXR3aWx4aGJscGh5bmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NjY1NDcsImV4cCI6MjA4NzI0MjU0N30.gCPo21F6gpAGokux0CfgR_JDNHBr8vGOtiFdF6mQ4qY";
@@ -117,6 +121,118 @@ function parseDueDateInput(input) {
   }
 
   return { value: localDate.toISOString(), error: "" };
+}
+
+function parseRecurrenceRule(rule) {
+  if (!rule) {
+    return { type: "", days: [] };
+  }
+
+  if (rule === "daily" || rule === "monthly" || rule === "weekly") {
+    return { type: rule, days: [] };
+  }
+
+  if (!rule.startsWith("weekly:")) {
+    return { type: "", days: [] };
+  }
+
+  const dayList = rule
+    .slice("weekly:".length)
+    .split(",")
+    .map((v) => Number(v))
+    .filter((v) => Number.isInteger(v) && v >= 0 && v <= 6);
+  const uniqueSorted = Array.from(new Set(dayList)).sort((a, b) => a - b);
+  return { type: "weekly", days: uniqueSorted };
+}
+
+function getRecurrenceLabel(recurrenceRule) {
+  const parsed = parseRecurrenceRule(recurrenceRule);
+  if (parsed.type === "daily") {
+    return "Quotidienne";
+  }
+  if (parsed.type === "monthly") {
+    return "Mensuelle";
+  }
+  if (parsed.type === "weekly") {
+    if (!parsed.days.length) {
+      return "Hebdomadaire";
+    }
+    const labels = parsed.days.map((day) => WEEKDAY_LABELS[day]).join(", ");
+    return `Hebdo: ${labels}`;
+  }
+  return "";
+}
+
+function getWeeklyDaySelection() {
+  if (!recurrenceDaysEl) {
+    return [];
+  }
+  return Array.from(recurrenceDaysEl.querySelectorAll(".recurrence-day-btn[aria-pressed='true']"))
+    .map((el) => Number(el.getAttribute("data-day")))
+    .filter((day) => Number.isInteger(day) && day >= 0 && day <= 6)
+    .sort((a, b) => a - b);
+}
+
+function getRecurrenceRuleFromForm() {
+  const selected = taskRecurrenceInput?.value || "";
+  if (selected !== "weekly") {
+    return selected;
+  }
+  const days = getWeeklyDaySelection();
+  if (!days.length) {
+    return "weekly";
+  }
+  return `weekly:${days.join(",")}`;
+}
+
+function updateRecurrenceDaysVisibility() {
+  if (!recurrenceDaysEl) {
+    return;
+  }
+  const isWeekly = taskRecurrenceInput?.value === "weekly";
+  recurrenceDaysEl.hidden = !isWeekly;
+}
+
+function getNextDueAtIso(currentDueAt, recurrenceRule) {
+  const parsed = parseRecurrenceRule(recurrenceRule);
+  if (!parsed.type) {
+    return null;
+  }
+
+  const baseDate = currentDueAt ? new Date(currentDueAt) : new Date();
+  if (Number.isNaN(baseDate.getTime())) {
+    return null;
+  }
+
+  if (parsed.type === "daily") {
+    baseDate.setDate(baseDate.getDate() + 1);
+    return baseDate.toISOString();
+  }
+
+  if (parsed.type === "monthly") {
+    baseDate.setMonth(baseDate.getMonth() + 1);
+    return baseDate.toISOString();
+  }
+
+  if (parsed.type !== "weekly") {
+    return null;
+  }
+
+  const days = parsed.days.length ? parsed.days : [baseDate.getDay()];
+  const originalDay = baseDate.getDay();
+  const originalMs = baseDate.getTime();
+  for (let delta = 1; delta <= 14; delta += 1) {
+    const candidate = new Date(originalMs);
+    candidate.setDate(candidate.getDate() + delta);
+    if (days.includes(candidate.getDay())) {
+      return candidate.toISOString();
+    }
+  }
+
+  const fallback = new Date(originalMs);
+  const nextDelta = ((days[0] - originalDay + 7) % 7) || 7;
+  fallback.setDate(fallback.getDate() + nextDelta);
+  return fallback.toISOString();
 }
 
 function getDetailsToggleIcon(open) {
@@ -313,8 +429,10 @@ function renderTask(task) {
 
   const createdAt = formatDate(task.created_at);
   const dueLine = task.due_at ? `<div><strong>Echeance:</strong> ${formatDate(task.due_at)}</div>` : "";
+  const recurrenceLabel = getRecurrenceLabel(task.recurrence_rule || "");
+  const recurrenceLine = recurrenceLabel ? `<div><strong>Recurrence:</strong> ${recurrenceLabel}</div>` : "";
   const completedLine = isDone && task.completed_at ? `<div><strong>Fait le:</strong> ${formatDate(task.completed_at)}</div>` : "";
-  detailsPanel.innerHTML = `<div class="task-details-content"><div><strong>Creee le:</strong> ${createdAt}</div>${dueLine}${completedLine}</div>`;
+  detailsPanel.innerHTML = `<div class="task-details-content"><div><strong>Creee le:</strong> ${createdAt}</div>${dueLine}${recurrenceLine}${completedLine}</div>`;
   item.appendChild(detailsPanel);
 
   const toggleDetails = () => {
@@ -410,12 +528,19 @@ function resetTaskForm() {
     return;
   }
   taskFormEl.reset();
+  if (recurrenceDaysEl) {
+    recurrenceDaysEl.querySelectorAll(".recurrence-day-btn").forEach((btn) => {
+      btn.setAttribute("aria-pressed", "false");
+    });
+  }
+  updateRecurrenceDaysVisibility();
 }
 
 function openTaskForm() {
   if (!taskFormOverlay || !taskFormEl || !taskTitleInput) {
     return;
   }
+  updateRecurrenceDaysVisibility();
   taskFormOverlay.hidden = false;
   taskTitleInput.focus();
 }
@@ -457,34 +582,68 @@ async function fetchTasks() {
     return;
   }
 
+  const selectedColumns = ["id", "title", "status", "created_at", "completed_at", "user_id"];
+  if (supportsDueDate) {
+    selectedColumns.push("due_at");
+  }
+  if (supportsRecurrence) {
+    selectedColumns.push("recurrence_rule");
+  }
+
   let { data, error } = await supabaseClient
     .from("tasks")
-    .select(supportsDueDate ? "id,title,status,created_at,completed_at,due_at,user_id" : "id,title,status,created_at,completed_at,user_id")
+    .select(selectedColumns.join(","))
     .eq("user_id", currentUser.id)
     .order("created_at", { ascending: false });
 
-  if (error && supportsDueDate && error.message && error.message.toLowerCase().includes("due_at")) {
-    supportsDueDate = false;
+  if (
+    error &&
+    error.message &&
+    ((supportsDueDate && error.message.toLowerCase().includes("due_at")) ||
+      (supportsRecurrence && error.message.toLowerCase().includes("recurrence_rule")))
+  ) {
+    if (error.message.toLowerCase().includes("due_at")) {
+      supportsDueDate = false;
+    }
+    if (error.message.toLowerCase().includes("recurrence_rule")) {
+      supportsRecurrence = false;
+    }
+
+    const fallbackColumns = ["id", "title", "status", "created_at", "completed_at", "user_id"];
+    if (supportsDueDate) {
+      fallbackColumns.push("due_at");
+    }
+    if (supportsRecurrence) {
+      fallbackColumns.push("recurrence_rule");
+    }
+
     const fallback = await supabaseClient
       .from("tasks")
-      .select("id,title,status,created_at,completed_at,user_id")
+      .select(fallbackColumns.join(","))
       .eq("user_id", currentUser.id)
       .order("created_at", { ascending: false });
     data = fallback.data;
     error = fallback.error;
     if (!error) {
-      setStatus("La colonne due_at est absente. Ajoutez-la pour activer les echeances.");
+      if (!supportsDueDate) {
+        setStatus("La colonne due_at est absente. Ajoutez-la pour activer les echeances.");
+      } else if (!supportsRecurrence) {
+        setStatus("La colonne recurrence_rule est absente. Ajoutez-la pour activer la recurrence.");
+      }
     }
   }
 
   if (error) {
     const needsUserColumn = error.message && error.message.toLowerCase().includes("user_id");
     const needsDueColumn = error.message && error.message.toLowerCase().includes("due_at");
+    const needsRecurrenceColumn = error.message && error.message.toLowerCase().includes("recurrence_rule");
     setStatus(
       needsUserColumn
         ? authDbHint("Erreur de lecture")
         : needsDueColumn
           ? "Erreur de lecture: la colonne due_at est requise pour les echeances."
+          : needsRecurrenceColumn
+            ? "Erreur de lecture: la colonne recurrence_rule est requise pour la recurrence."
           : `Erreur de lecture: ${error.message}`,
       true
     );
@@ -495,7 +654,7 @@ async function fetchTasks() {
   renderFilteredTasks();
 }
 
-async function addTask(title, dueAtIso = null) {
+async function addTask(title, dueAtIso = null, recurrence = "") {
   if (!currentUser) {
     setStatus("Connectez-vous avant d'ajouter une tache.", true);
     return false;
@@ -509,15 +668,24 @@ async function addTask(title, dueAtIso = null) {
   if (supportsDueDate && dueAtIso) {
     payload.due_at = dueAtIso;
   }
+  if (supportsRecurrence && recurrence) {
+    payload.recurrence_rule = recurrence;
+  }
 
   const { error } = await supabaseClient.from("tasks").insert(payload);
 
   if (error) {
     const needsUserColumn = error.message && error.message.toLowerCase().includes("user_id");
     const needsDueColumn = error.message && error.message.toLowerCase().includes("due_at");
+    const needsRecurrenceColumn = error.message && error.message.toLowerCase().includes("recurrence_rule");
     if (needsDueColumn) {
       supportsDueDate = false;
       setStatus("Erreur d'ajout: la colonne due_at est absente. Ajoutez-la pour stocker les echeances.", true);
+      return false;
+    }
+    if (needsRecurrenceColumn) {
+      supportsRecurrence = false;
+      setStatus("Erreur d'ajout: la colonne recurrence_rule est absente. Ajoutez-la pour stocker la recurrence.", true);
       return false;
     }
     setStatus(needsUserColumn ? authDbHint("Erreur d'ajout") : `Erreur d'ajout: ${error.message}`, true);
@@ -534,6 +702,8 @@ async function acknowledgeTask(id) {
     return;
   }
 
+  const sourceTask = allTasks.find((task) => task.id === id) || null;
+
   const { error } = await supabaseClient
     .from("tasks")
     .update({ status: "done", completed_at: new Date().toISOString() })
@@ -543,6 +713,37 @@ async function acknowledgeTask(id) {
   if (error) {
     setStatus(`Erreur d'acquittement: ${error.message}`, true);
     return;
+  }
+
+  const recurrence = sourceTask?.recurrence_rule || "";
+  if (recurrence && sourceTask) {
+    const nextPayload = {
+      title: sourceTask.title,
+      status: "pending",
+      user_id: currentUser.id,
+    };
+
+    if (supportsRecurrence) {
+      nextPayload.recurrence_rule = recurrence;
+    }
+
+    if (supportsDueDate && sourceTask.due_at) {
+      const nextDueAt = getNextDueAtIso(sourceTask.due_at, recurrence);
+      if (nextDueAt) {
+        nextPayload.due_at = nextDueAt;
+      }
+    }
+
+    const { error: recurrenceError } = await supabaseClient.from("tasks").insert(nextPayload);
+    if (recurrenceError) {
+      if (recurrenceError.message && recurrenceError.message.toLowerCase().includes("recurrence_rule")) {
+        supportsRecurrence = false;
+      }
+      if (recurrenceError.message && recurrenceError.message.toLowerCase().includes("due_at")) {
+        supportsDueDate = false;
+      }
+      setStatus(`Erreur de recurrence: ${recurrenceError.message}`, true);
+    }
   }
 
   await fetchTasks();
@@ -759,10 +960,36 @@ if (taskFormEl) {
       return;
     }
 
-    const added = await addTask(title, parsedDue.value);
+    const recurrence = getRecurrenceRuleFromForm();
+    if (recurrence && !supportsRecurrence) {
+      setStatus("La recurrence n'est pas disponible: ajoutez la colonne recurrence_rule.", true);
+      return;
+    }
+    const added = await addTask(title, parsedDue.value, recurrence);
     if (added) {
       closeTaskForm();
     }
+  });
+}
+
+if (taskRecurrenceInput) {
+  taskRecurrenceInput.addEventListener("change", () => {
+    updateRecurrenceDaysVisibility();
+  });
+}
+
+if (recurrenceDaysEl) {
+  recurrenceDaysEl.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) {
+      return;
+    }
+    const button = target.closest(".recurrence-day-btn");
+    if (!(button instanceof HTMLButtonElement)) {
+      return;
+    }
+    const pressed = button.getAttribute("aria-pressed") === "true";
+    button.setAttribute("aria-pressed", String(!pressed));
   });
 }
 

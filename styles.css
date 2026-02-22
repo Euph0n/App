@@ -46,6 +46,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  position: relative;
   flex: 0 0 auto;
 }
 
@@ -74,6 +75,7 @@ menu,
 
 input,
 textarea,
+select,
 button {
   border-radius: 8px;
   border: 1px solid #475569;
@@ -82,7 +84,8 @@ button {
 }
 
 input,
-textarea {
+textarea,
+select {
   background: #0f172a;
   color: #f8fafc;
   flex: 1;
@@ -295,7 +298,7 @@ input:disabled {
 }
 
 .settings-menu {
-  position: relative;
+  position: static;
   display: inline-flex;
 }
 
@@ -338,14 +341,15 @@ input:disabled {
 
 .settings-panel {
   position: absolute;
+  top: calc(100% + 0.45rem);
   right: 0;
-  margin-top: 0.45rem;
+  margin-top: 0;
   border: 1px solid #334155;
   border-radius: 10px;
   background: #1e293b;
   padding: 0.5rem;
   width: max-content;
-  min-width: max-content;
+  min-width: 0;
   max-width: calc(100vw - 2rem);
   display: grid;
   gap: 0.4rem;
@@ -419,6 +423,24 @@ input:disabled {
   margin-top: 0.25rem;
 }
 
+.recurrence-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.recurrence-day-btn {
+  min-width: 0;
+  padding: 0.35rem 0;
+  text-align: center;
+}
+
+.recurrence-day-btn[aria-pressed="true"] {
+  background: #22c55e;
+  color: #052e16;
+  border-color: #16a34a;
+}
+
 @media (display-mode: standalone) {
   #installBtn {
     display: none;
@@ -427,8 +449,10 @@ input:disabled {
 
 @media (max-width: 640px) {
   .settings-panel {
-    left: 0;
-    right: auto;
+    right: 0;
+    left: auto;
+    width: max-content;
+    max-width: calc(100vw - 1rem);
   }
 }
 
