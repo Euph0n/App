@@ -98,7 +98,23 @@ function getUserIdentity(user) {
   if (!user) {
     return "";
   }
-  return user.email || user.user_metadata?.full_name || user.id;
+  return user.email || user.user_metadata?.email || user.user_metadata?.full_name || user.id;
+}
+
+function setAccountInfo(user) {
+  if (!accountInfoEl) {
+    return;
+  }
+
+  const identity = getUserIdentity(user);
+  if (!identity) {
+    accountInfoEl.textContent = "";
+    accountInfoEl.hidden = true;
+    return;
+  }
+
+  accountInfoEl.textContent = `Compte: ${identity}`;
+  accountInfoEl.hidden = false;
 }
 
 async function fetchTasks() {
@@ -210,9 +226,7 @@ async function handleSession(session) {
       settingsMenu.hidden = true;
       settingsMenu.open = false;
     }
-    if (accountInfoEl) {
-      accountInfoEl.textContent = "";
-    }
+    setAccountInfo(null);
     logoutBtn.hidden = true;
     setTaskInputEnabled(false);
     resetTaskLists("Connectez-vous pour voir vos taches.");
@@ -223,9 +237,7 @@ async function handleSession(session) {
   if (settingsMenu) {
     settingsMenu.hidden = false;
   }
-  if (accountInfoEl) {
-    accountInfoEl.textContent = `Compte: ${getUserIdentity(currentUser)}`;
-  }
+  setAccountInfo(currentUser);
   logoutBtn.hidden = false;
   setTaskInputEnabled(true);
   closeAuthOverlay();
@@ -300,6 +312,22 @@ logoutBtn.addEventListener("click", () => {
   }
   void signOut();
 });
+
+if (settingsMenu) {
+  settingsMenu.addEventListener("toggle", async () => {
+    if (!settingsMenu.open || !supabaseClient) {
+      return;
+    }
+
+    const { data } = await supabaseClient.auth.getUser();
+    if (data?.user) {
+      currentUser = data.user;
+      setAccountInfo(currentUser);
+    } else {
+      setAccountInfo(currentUser);
+    }
+  });
+}
 
 if (installBtn) {
   installBtn.addEventListener("click", async () => {
