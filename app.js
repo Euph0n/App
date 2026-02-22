@@ -76,7 +76,24 @@ function renderTask(task) {
 
   if (!isDone) {
     const button = document.createElement("button");
-    button.textContent = "Acquitter";
+    button.className = "icon-btn";
+    button.setAttribute("aria-label", "Acquitter la tache");
+    button.title = "Acquitter";
+    button.innerHTML = `
+      <svg
+        class="action-icon"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        aria-hidden="true"
+      >
+        <path
+          fill="currentColor"
+          d="M9.55 18.2 4.8 13.45a1 1 0 1 1 1.4-1.42l3.35 3.35 8.25-8.25a1 1 0 1 1 1.4 1.41l-8.95 8.96a1 1 0 0 1-1.4 0z"
+        />
+      </svg>
+    `;
     button.addEventListener("click", () => acknowledgeTask(task.id));
     actionCell.appendChild(button);
   } else {
