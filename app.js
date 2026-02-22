@@ -6,6 +6,7 @@ const accountInfoEl = document.getElementById("accountInfo");
 const installBtn = document.getElementById("installBtn");
 const authOverlay = document.getElementById("authOverlay");
 const addTaskBtn = document.getElementById("addTaskBtn");
+const togglePendingBtn = document.getElementById("togglePendingBtn");
 const toggleHistoryBtn = document.getElementById("toggleHistoryBtn");
 const pendingSectionEl = document.getElementById("pendingSection");
 const pendingTasksEl = document.getElementById("pendingTasks");
@@ -15,6 +16,8 @@ const historyTasksEl = document.getElementById("historyTasks");
 let supabaseClient;
 let currentUser = null;
 let deferredInstallPrompt = null;
+let showPending = true;
+let showHistory = false;
 
 const SUPABASE_URL = "https://pikgsutwilxhblphynax.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpa2dzdXR3aWx4aGJscGh5bmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NjY1NDcsImV4cCI6MjA4NzI0MjU0N30.gCPo21F6gpAGokux0CfgR_JDNHBr8vGOtiFdF6mQ4qY";
@@ -31,17 +34,49 @@ function setAddTaskEnabled(enabled) {
   addTaskBtn.disabled = !enabled;
 }
 
-function setHistoryVisible(visible) {
-  if (!historySectionEl || !toggleHistoryBtn || !pendingSectionEl) {
+function applyTaskView() {
+  if (!historySectionEl || !toggleHistoryBtn || !pendingSectionEl || !togglePendingBtn) {
     return;
   }
 
-  pendingSectionEl.hidden = visible;
-  historySectionEl.hidden = !visible;
-  toggleHistoryBtn.setAttribute("aria-expanded", String(visible));
-  const label = visible ? "Masquer historique" : "Afficher historique";
-  toggleHistoryBtn.setAttribute("aria-label", label);
-  toggleHistoryBtn.title = label;
+  pendingSectionEl.hidden = !showPending;
+  historySectionEl.hidden = !showHistory;
+
+  const pendingLabel = showPending ? "Masquer taches en cours" : "Afficher taches en cours";
+  togglePendingBtn.setAttribute("aria-pressed", String(showPending));
+  togglePendingBtn.setAttribute("aria-label", pendingLabel);
+  togglePendingBtn.title = pendingLabel;
+
+  const historyLabel = showHistory ? "Masquer historique" : "Afficher historique";
+  toggleHistoryBtn.setAttribute("aria-pressed", String(showHistory));
+  toggleHistoryBtn.setAttribute("aria-label", historyLabel);
+  toggleHistoryBtn.title = historyLabel;
+}
+
+function togglePendingVisibility() {
+  if (!showPending && !showHistory) {
+    showHistory = true;
+  }
+
+  if (showPending && !showHistory) {
+    return;
+  }
+
+  showPending = !showPending;
+  applyTaskView();
+}
+
+function toggleHistoryVisibility() {
+  if (!showPending && !showHistory) {
+    showPending = true;
+  }
+
+  if (showHistory && !showPending) {
+    return;
+  }
+
+  showHistory = !showHistory;
+  applyTaskView();
 }
 
 function resetTaskLists(message) {
@@ -393,15 +428,20 @@ if (addTaskBtn) {
   });
 }
 
+if (togglePendingBtn) {
+  togglePendingBtn.addEventListener("click", () => {
+    togglePendingVisibility();
+  });
+}
+
 if (toggleHistoryBtn) {
   toggleHistoryBtn.addEventListener("click", () => {
-    const shouldShow = historySectionEl ? historySectionEl.hidden : true;
-    setHistoryVisible(shouldShow);
+    toggleHistoryVisibility();
   });
 }
 
 setAddTaskEnabled(false);
-setHistoryVisible(false);
+applyTaskView();
 resetTaskLists("Connectez-vous pour voir vos taches.");
 void initSupabase();
 
