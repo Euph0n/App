@@ -136,6 +136,10 @@ input:disabled {
   z-index: 1000;
 }
 
+.auth-overlay[hidden] {
+  display: none !important;
+}
+
 .auth-modal {
   border: 1px solid #334155;
   border-radius: 12px;
