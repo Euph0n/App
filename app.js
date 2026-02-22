@@ -3,7 +3,7 @@ const authStateEl = document.getElementById("authState");
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const installBtn = document.getElementById("installBtn");
-const authDialog = document.getElementById("authDialog");
+const authOverlay = document.getElementById("authOverlay");
 const taskForm = document.getElementById("taskForm");
 const taskInput = document.getElementById("taskInput");
 const pendingTasksEl = document.getElementById("pendingTasks");
@@ -66,18 +66,18 @@ function authDbHint(operation) {
   return `${operation}: verifiez que la table tasks contient user_id (uuid) et que les policies RLS sont configurees pour auth.uid().`;
 }
 
-function showAuthDialog() {
-  if (!authDialog || authDialog.open) {
+function showAuthOverlay() {
+  if (!authOverlay || !authOverlay.hidden) {
     return;
   }
-  authDialog.showModal();
+  authOverlay.hidden = false;
 }
 
-function closeAuthDialog() {
-  if (!authDialog || !authDialog.open) {
+function closeAuthOverlay() {
+  if (!authOverlay || authOverlay.hidden) {
     return;
   }
-  authDialog.close();
+  authOverlay.hidden = true;
 }
 
 async function fetchTasks() {
@@ -189,7 +189,7 @@ async function handleSession(session) {
     logoutBtn.hidden = true;
     setTaskInputEnabled(false);
     resetTaskLists("Connectez-vous pour voir vos taches.");
-    showAuthDialog();
+    showAuthOverlay();
     return;
   }
 
@@ -197,7 +197,7 @@ async function handleSession(session) {
   authStateEl.textContent = `Connecte: ${identity}`;
   logoutBtn.hidden = false;
   setTaskInputEnabled(true);
-  closeAuthDialog();
+  closeAuthOverlay();
 
   await fetchTasks();
 }
@@ -291,12 +291,6 @@ taskForm.addEventListener("submit", async (event) => {
 setTaskInputEnabled(false);
 resetTaskLists("Connectez-vous pour voir vos taches.");
 void initSupabase();
-
-if (authDialog) {
-  authDialog.addEventListener("cancel", (event) => {
-    event.preventDefault();
-  });
-}
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
