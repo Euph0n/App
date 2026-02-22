@@ -158,7 +158,8 @@ input:disabled {
   border-radius: 10px;
   background: #1e293b;
   padding: 0.5rem;
-  min-width: 320px;
+  width: max-content;
+  min-width: max-content;
   max-width: calc(100vw - 2rem);
   display: grid;
   gap: 0.4rem;
