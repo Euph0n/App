@@ -37,7 +37,9 @@ function setHistoryVisible(visible) {
 
   historySectionEl.hidden = !visible;
   toggleHistoryBtn.setAttribute("aria-expanded", String(visible));
-  toggleHistoryBtn.textContent = visible ? "Masquer historique" : "Historique";
+  const label = visible ? "Masquer historique" : "Afficher historique";
+  toggleHistoryBtn.setAttribute("aria-label", label);
+  toggleHistoryBtn.title = label;
 }
 
 function resetTaskLists(message) {
