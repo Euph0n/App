@@ -1,4 +1,5 @@
-const CACHE_NAME = "taskflow-cache-v2";
+const CACHE_VERSION = "v3";
+const CACHE_NAME = `taskflow-cache-${CACHE_VERSION}`;
 const ASSETS = ["./", "./index.html", "./styles.css", "./app.js", "./manifest.webmanifest", "./icon.svg"];
 const NETWORK_FIRST_DESTINATIONS = new Set(["script", "style", "worker", "document"]);
 
@@ -45,7 +46,8 @@ async function putInCache(request, response) {
 
 async function networkFirst(request, fallbackRequest) {
   try {
-    const networkResponse = await fetch(request);
+    const networkRequest = new Request(request, { cache: "no-store" });
+    const networkResponse = await fetch(networkRequest);
     return putInCache(request, networkResponse);
   } catch {
     const cached = await caches.match(request);
@@ -74,6 +76,11 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
 
   if (request.method !== "GET" || url.origin !== self.location.origin) {
+    return;
+  }
+
+  // Let the browser handle service worker update checks directly.
+  if (url.pathname.endsWith("/sw.js")) {
     return;
   }
 
