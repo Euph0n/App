@@ -385,8 +385,40 @@ document.addEventListener("visibilitychange", () => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch(() => {
-      setStatus("Service worker non disponible.", true);
+    let didRefreshForUpdate = false;
+
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (didRefreshForUpdate) {
+        return;
+      }
+      didRefreshForUpdate = true;
+      window.location.reload();
     });
+
+    navigator.serviceWorker
+      .register("./sw.js", { updateViaCache: "none" })
+      .then(async (registration) => {
+        await registration.update();
+
+        if (registration.waiting) {
+          registration.waiting.postMessage({ type: "SKIP_WAITING" });
+        }
+
+        registration.addEventListener("updatefound", () => {
+          const nextWorker = registration.installing;
+          if (!nextWorker) {
+            return;
+          }
+
+          nextWorker.addEventListener("statechange", () => {
+            if (nextWorker.state === "installed" && navigator.serviceWorker.controller) {
+              nextWorker.postMessage({ type: "SKIP_WAITING" });
+            }
+          });
+        });
+      })
+      .catch(() => {
+        setStatus("Service worker non disponible.", true);
+      });
   });
 }
