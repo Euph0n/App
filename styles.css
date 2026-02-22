@@ -1,6 +1,7 @@
-﻿:root {
+:root {
   color-scheme: light dark;
   font-family: Inter, system-ui, sans-serif;
+  --action-btn-size: 2vw;
 }
 
 body {
@@ -10,7 +11,8 @@ body {
 }
 
 .app {
-  max-width: 760px;
+  width: 90%;
+  max-width: none;
   margin: 2rem auto;
   padding: 0 1rem 2rem;
 }
@@ -29,6 +31,9 @@ body {
 
 .section-head h2 {
   margin: 0;
+  white-space: nowrap;
+  font-size: var(--action-btn-size);
+  line-height: 1.1;
 }
 
 .section-actions {
@@ -39,9 +44,9 @@ body {
 
 .section-actions > .settings-trigger,
 .section-actions .settings-menu > .settings-trigger {
-  width: 2rem;
-  min-width: 2rem;
-  height: 2rem;
+  width: var(--action-btn-size);
+  min-width: var(--action-btn-size);
+  height: var(--action-btn-size);
   padding: 0;
   line-height: 1;
   box-sizing: border-box;
@@ -111,6 +116,10 @@ button.secondary {
   display: block;
 }
 
+#togglePendingBtn .action-icon {
+  transform: translateY(1px);
+}
+
 button[hidden] {
   display: none;
 }
@@ -137,49 +146,76 @@ input:disabled {
   overflow: hidden;
 }
 
+.task-item.task-item-pending {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+.task-item.task-item-done {
+  background: #0b1320;
+  border-color: #334155;
+}
+
 .task-item-main {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.6rem;
-  padding: 0.65rem 0.75rem;
+  height: 2.6vw;
+  padding: 0 0.75rem;
 }
 
 .task-title {
+  font-size: 1.2vw;
   font-weight: 600;
   color: #f8fafc;
-  line-height: 1.25;
+  line-height: 1.15;
   overflow-wrap: anywhere;
+  position: relative;
+  top: -1px;
+}
+
+.task-title-done {
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  text-decoration-color: #94a3b8;
+  color: #cbd5e1;
 }
 
 .task-details-btn {
   flex: 0 0 auto;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: #cbd5e1;
+  min-width: 1.4rem;
+  height: 1.4rem;
 }
 
-.task-item-pending {
+.task-item-swipable {
   transform: translateX(var(--swipe-offset));
   transition: transform 0.16s ease;
   touch-action: pan-y;
 }
 
-.task-item-pending.swipe-active {
+.task-item-swipable.swipe-active {
   transition: none;
 }
 
-.task-item-pending.swipe-ready-ack {
-  border-color: #166534;
-  background: #14532d;
+.task-item-swipable.swipe-ready-ack {
+  border-color: #16a34a;
+  background: #22c55e;
 }
 
-.task-item-pending.swipe-ready-delete {
-  border-color: #b91c1c;
-  background: #7f1d1d;
+.task-item-swipable.swipe-ready-delete {
+  border-color: #dc2626;
+  background: #ef4444;
 }
 
 .task-details-panel {
   background: #111827;
   border-top: 1px solid #334155;
-  padding: 0.55rem 0.75rem 0.65rem;
+  padding: 0.4rem 0.75rem 0.45rem;
 }
 
 .task-details-content {
@@ -220,13 +256,13 @@ input:disabled {
   list-style: none;
   border-radius: 8px;
   border: 0;
-  padding: 0.35rem 0.6rem;
+  padding: 0;
   font: inherit;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  min-width: 2rem;
-  height: 2rem;
+  min-width: var(--action-btn-size);
+  height: var(--action-btn-size);
   box-sizing: border-box;
 }
 
@@ -239,9 +275,9 @@ input:disabled {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 2rem;
-  height: 2rem;
-  padding: 0.35rem 0.6rem;
+  min-width: var(--action-btn-size);
+  height: var(--action-btn-size);
+  padding: 0;
   box-sizing: border-box;
 }
 
@@ -319,6 +355,23 @@ input:disabled {
   margin-top: 0;
 }
 
+.task-form {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.task-form label {
+  font-size: 0.86rem;
+  color: #cbd5e1;
+}
+
+.task-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  margin-top: 0.25rem;
+}
+
 @media (display-mode: standalone) {
   #installBtn {
     display: none;
@@ -331,3 +384,4 @@ input:disabled {
     right: auto;
   }
 }
+

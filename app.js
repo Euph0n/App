@@ -5,6 +5,11 @@ const settingsMenu = document.getElementById("settingsMenu");
 const accountInfoEl = document.getElementById("accountInfo");
 const installBtn = document.getElementById("installBtn");
 const authOverlay = document.getElementById("authOverlay");
+const taskFormOverlay = document.getElementById("taskFormOverlay");
+const taskFormEl = document.getElementById("taskForm");
+const taskTitleInput = document.getElementById("taskTitleInput");
+const taskDueInput = document.getElementById("taskDueInput");
+const cancelTaskFormBtn = document.getElementById("cancelTaskFormBtn");
 const addTaskBtn = document.getElementById("addTaskBtn");
 const togglePendingBtn = document.getElementById("togglePendingBtn");
 const toggleHistoryBtn = document.getElementById("toggleHistoryBtn");
@@ -16,6 +21,7 @@ let deferredInstallPrompt = null;
 let showPending = true;
 let showHistory = true;
 let allTasks = [];
+let supportsDueDate = true;
 
 const SUPABASE_URL = "https://pikgsutwilxhblphynax.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpa2dzdXR3aWx4aGJscGh5bmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NjY1NDcsImV4cCI6MjA4NzI0MjU0N30.gCPo21F6gpAGokux0CfgR_JDNHBr8vGOtiFdF6mQ4qY";
@@ -46,10 +52,45 @@ function applyFilterButtonState() {
 }
 
 function formatDate(value) {
-  return new Intl.DateTimeFormat("fr-FR", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
+  const date = new Date(value);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = String(date.getFullYear()).slice(-2);
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+}
+
+function parseDueDateInput(input) {
+  const trimmed = input.trim();
+  if (!trimmed) {
+    return { value: null, error: "" };
+  }
+
+  const match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?$/);
+  if (!match) {
+    return { value: null, error: "Format d'echeance invalide. Utilisez AAAA-MM-JJ ou AAAA-MM-JJ HH:MM." };
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const hours = Number(match[4] ?? "00");
+  const minutes = Number(match[5] ?? "00");
+
+  const localDate = new Date(year, month - 1, day, hours, minutes, 0, 0);
+  const isValid =
+    localDate.getFullYear() === year &&
+    localDate.getMonth() === month - 1 &&
+    localDate.getDate() === day &&
+    localDate.getHours() === hours &&
+    localDate.getMinutes() === minutes;
+
+  if (!isValid) {
+    return { value: null, error: "Date d'echeance invalide." };
+  }
+
+  return { value: localDate.toISOString(), error: "" };
 }
 
 function getDetailsToggleIcon(open) {
@@ -78,9 +119,10 @@ function setDetailsToggleState(button, open) {
   button.innerHTML = getDetailsToggleIcon(open);
 }
 
-function setupSwipeActions(item, taskId, canAcknowledge) {
+function setupSwipeActions(item, taskId, canAcknowledge, onTap) {
   const minSwipeDistance = 90;
   const maxSwipeDistance = 140;
+  const tapThreshold = 8;
   let isDragging = false;
   let pointerId = null;
   let startX = 0;
@@ -167,6 +209,9 @@ function setupSwipeActions(item, taskId, canAcknowledge) {
       return;
     }
 
+    if (Math.abs(offsetX) <= tapThreshold) {
+      onTap();
+    }
     resetSwipeState();
   });
 
@@ -181,6 +226,7 @@ function setupSwipeActions(item, taskId, canAcknowledge) {
 function renderTask(task) {
   const item = document.createElement("li");
   item.className = "task-item";
+  item.classList.add("task-item-swipable");
   const isDone = task.status === "done";
   const detailsId = `task-details-${task.id}`;
 
@@ -189,24 +235,19 @@ function renderTask(task) {
 
   const title = document.createElement("span");
   title.className = "task-title";
+  if (isDone) {
+    title.classList.add("task-title-done");
+  }
   title.textContent = task.title;
   mainRow.appendChild(title);
 
   const detailsToggleBtn = document.createElement("button");
   detailsToggleBtn.type = "button";
-  detailsToggleBtn.className = "secondary icon-btn task-details-btn";
+  detailsToggleBtn.className = "icon-btn task-details-btn";
   detailsToggleBtn.setAttribute("aria-controls", detailsId);
   setDetailsToggleState(detailsToggleBtn, false);
   mainRow.appendChild(detailsToggleBtn);
   item.appendChild(mainRow);
-
-  if (!isDone) {
-    item.classList.add("task-item-pending");
-    setupSwipeActions(item, task.id, true);
-  } else {
-    item.classList.add("task-item-done");
-    setupSwipeActions(item, task.id, false);
-  }
 
   const detailsPanel = document.createElement("div");
   detailsPanel.id = detailsId;
@@ -214,15 +255,28 @@ function renderTask(task) {
   detailsPanel.hidden = true;
 
   const createdAt = formatDate(task.created_at);
-  const completedAt = isDone && task.completed_at ? formatDate(task.completed_at) : "Non acquittee";
-  detailsPanel.innerHTML = `<div class="task-details-content"><div><strong>Creee le:</strong> ${createdAt}</div><div><strong>Acquittee le:</strong> ${completedAt}</div></div>`;
+  const dueLine = task.due_at ? `<div><strong>Echeance:</strong> ${formatDate(task.due_at)}</div>` : "";
+  const completedLine = isDone && task.completed_at ? `<div><strong>Fait le:</strong> ${formatDate(task.completed_at)}</div>` : "";
+  detailsPanel.innerHTML = `<div class="task-details-content"><div><strong>Creee le:</strong> ${createdAt}</div>${dueLine}${completedLine}</div>`;
   item.appendChild(detailsPanel);
 
-  detailsToggleBtn.addEventListener("click", () => {
+  const toggleDetails = () => {
     const open = detailsPanel.hidden;
     detailsPanel.hidden = !open;
     setDetailsToggleState(detailsToggleBtn, open);
+  };
+
+  detailsToggleBtn.addEventListener("click", () => {
+    toggleDetails();
   });
+
+  if (!isDone) {
+    item.classList.add("task-item-pending");
+    setupSwipeActions(item, task.id, true, toggleDetails);
+  } else {
+    item.classList.add("task-item-done");
+    setupSwipeActions(item, task.id, false, toggleDetails);
+  }
 
   return item;
 }
@@ -230,7 +284,8 @@ function renderTask(task) {
 function renderFilteredTasks() {
   taskListEl.replaceChildren();
 
-  const filtered = allTasks.filter((task) => {
+  const filtered = allTasks
+    .filter((task) => {
     if (task.status === "pending") {
       return showPending;
     }
@@ -238,7 +293,12 @@ function renderFilteredTasks() {
       return showHistory;
     }
     return true;
-  });
+    })
+    .sort((a, b) => {
+      const rankA = a.status === "pending" ? 0 : 1;
+      const rankB = b.status === "pending" ? 0 : 1;
+      return rankA - rankB;
+    });
 
   filtered.forEach((task) => taskListEl.appendChild(renderTask(task)));
 
@@ -283,6 +343,29 @@ function closeAuthOverlay() {
   authOverlay.hidden = true;
 }
 
+function resetTaskForm() {
+  if (!taskFormEl) {
+    return;
+  }
+  taskFormEl.reset();
+}
+
+function openTaskForm() {
+  if (!taskFormOverlay || !taskFormEl || !taskTitleInput) {
+    return;
+  }
+  taskFormOverlay.hidden = false;
+  taskTitleInput.focus();
+}
+
+function closeTaskForm() {
+  if (!taskFormOverlay) {
+    return;
+  }
+  taskFormOverlay.hidden = true;
+  resetTaskForm();
+}
+
 function getUserIdentity(user) {
   if (!user) {
     return "";
@@ -312,15 +395,37 @@ async function fetchTasks() {
     return;
   }
 
-  const { data, error } = await supabaseClient
+  let { data, error } = await supabaseClient
     .from("tasks")
-    .select("id,title,status,created_at,completed_at,user_id")
+    .select(supportsDueDate ? "id,title,status,created_at,completed_at,due_at,user_id" : "id,title,status,created_at,completed_at,user_id")
     .eq("user_id", currentUser.id)
     .order("created_at", { ascending: false });
 
+  if (error && supportsDueDate && error.message && error.message.toLowerCase().includes("due_at")) {
+    supportsDueDate = false;
+    const fallback = await supabaseClient
+      .from("tasks")
+      .select("id,title,status,created_at,completed_at,user_id")
+      .eq("user_id", currentUser.id)
+      .order("created_at", { ascending: false });
+    data = fallback.data;
+    error = fallback.error;
+    if (!error) {
+      setStatus("La colonne due_at est absente. Ajoutez-la pour activer les echeances.");
+    }
+  }
+
   if (error) {
     const needsUserColumn = error.message && error.message.toLowerCase().includes("user_id");
-    setStatus(needsUserColumn ? authDbHint("Erreur de lecture") : `Erreur de lecture: ${error.message}`, true);
+    const needsDueColumn = error.message && error.message.toLowerCase().includes("due_at");
+    setStatus(
+      needsUserColumn
+        ? authDbHint("Erreur de lecture")
+        : needsDueColumn
+          ? "Erreur de lecture: la colonne due_at est requise pour les echeances."
+          : `Erreur de lecture: ${error.message}`,
+      true
+    );
     return;
   }
 
@@ -328,25 +433,37 @@ async function fetchTasks() {
   renderFilteredTasks();
 }
 
-async function addTask(title) {
+async function addTask(title, dueAtIso = null) {
   if (!currentUser) {
     setStatus("Connectez-vous avant d'ajouter une tache.", true);
-    return;
+    return false;
   }
 
-  const { error } = await supabaseClient.from("tasks").insert({
+  const payload = {
     title,
     status: "pending",
     user_id: currentUser.id,
-  });
+  };
+  if (supportsDueDate && dueAtIso) {
+    payload.due_at = dueAtIso;
+  }
+
+  const { error } = await supabaseClient.from("tasks").insert(payload);
 
   if (error) {
     const needsUserColumn = error.message && error.message.toLowerCase().includes("user_id");
+    const needsDueColumn = error.message && error.message.toLowerCase().includes("due_at");
+    if (needsDueColumn) {
+      supportsDueDate = false;
+      setStatus("Erreur d'ajout: la colonne due_at est absente. Ajoutez-la pour stocker les echeances.", true);
+      return false;
+    }
     setStatus(needsUserColumn ? authDbHint("Erreur d'ajout") : `Erreur d'ajout: ${error.message}`, true);
-    return;
+    return false;
   }
 
   await fetchTasks();
+  return true;
 }
 
 async function acknowledgeTask(id) {
@@ -412,6 +529,7 @@ async function handleSession(session) {
 
   if (!currentUser) {
     allTasks = [];
+    closeTaskForm();
     if (settingsMenu) {
       settingsMenu.hidden = true;
       settingsMenu.open = false;
@@ -549,24 +667,54 @@ window.addEventListener("appinstalled", () => {
 });
 
 if (addTaskBtn) {
-  addTaskBtn.addEventListener("click", async () => {
+  addTaskBtn.addEventListener("click", () => {
     if (!supabaseClient || !currentUser) {
       setStatus("Connectez-vous avant d'ajouter une tache.", true);
       return;
     }
+    openTaskForm();
+  });
+}
 
-    const input = window.prompt("Titre de la tache ?", "");
-    if (input === null) {
+if (taskFormEl) {
+  taskFormEl.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (!taskTitleInput) {
       return;
     }
 
-    const title = input.trim();
+    const title = taskTitleInput.value.trim();
     if (!title) {
       setStatus("Le titre de la tache est requis.", true);
       return;
     }
 
-    await addTask(title);
+    const dueRaw = taskDueInput?.value ?? "";
+    const parsedDue = parseDueDateInput(dueRaw);
+    if (parsedDue.error) {
+      setStatus(parsedDue.error, true);
+      return;
+    }
+
+    const added = await addTask(title, parsedDue.value);
+    if (added) {
+      closeTaskForm();
+    }
+  });
+}
+
+if (cancelTaskFormBtn) {
+  cancelTaskFormBtn.addEventListener("click", () => {
+    closeTaskForm();
+  });
+}
+
+if (taskFormOverlay) {
+  taskFormOverlay.addEventListener("click", (event) => {
+    if (event.target === taskFormOverlay) {
+      closeTaskForm();
+    }
   });
 }
 

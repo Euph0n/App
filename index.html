@@ -116,6 +116,24 @@
       </div>
     </div>
 
+    <div id="taskFormOverlay" class="auth-overlay" hidden>
+      <div class="auth-modal task-form-modal" role="dialog" aria-modal="true" aria-labelledby="taskFormTitle">
+        <h2 id="taskFormTitle">Nouvelle tache</h2>
+        <form id="taskForm" class="task-form">
+          <label for="taskTitleInput">Titre</label>
+          <input id="taskTitleInput" name="title" type="text" autocomplete="off" required />
+
+          <label for="taskDueInput">Echeance (optionnel)</label>
+          <input id="taskDueInput" name="due_at" type="datetime-local" />
+
+          <div class="task-form-actions">
+            <button id="cancelTaskFormBtn" type="button" class="secondary">Annuler</button>
+            <button id="submitTaskFormBtn" type="submit">Ajouter</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <script src="app.js"></script>
   </body>
 </html>
