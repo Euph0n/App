@@ -8,18 +8,24 @@ const authOverlay = document.getElementById("authOverlay");
 const taskFormOverlay = document.getElementById("taskFormOverlay");
 const taskFormEl = document.getElementById("taskForm");
 const taskTitleInput = document.getElementById("taskTitleInput");
+const taskDateCard = document.getElementById("taskDateCard");
+const taskTimeCard = document.getElementById("taskTimeCard");
 const taskDueFields = document.getElementById("taskDueFields");
+const taskDueDateBtn = document.getElementById("taskDueDateBtn");
 const taskDueInput = document.getElementById("taskDueInput");
 const taskDueTimeInput = document.getElementById("taskDueTimeInput");
 const taskDueTimeWheelBtn = document.getElementById("taskDueTimeWheelBtn");
 const toggleDueInputBtn = document.getElementById("toggleDueInputBtn");
 const dueTimeOverlay = document.getElementById("dueTimeOverlay");
-const wheelHourSelect = document.getElementById("wheelHourSelect");
-const wheelMinuteSelect = document.getElementById("wheelMinuteSelect");
+const dueTimeTextInput = document.getElementById("dueTimeTextInput");
+const dueTimeErrorEl = document.getElementById("dueTimeError");
 const cancelDueTimeBtn = document.getElementById("cancelDueTimeBtn");
 const confirmDueTimeBtn = document.getElementById("confirmDueTimeBtn");
 const taskRecurrenceInput = document.getElementById("taskRecurrenceInput");
 const toggleRecurrenceInputBtn = document.getElementById("toggleRecurrenceInputBtn");
+const recurrenceCustomEl = document.getElementById("recurrenceCustom");
+const customCountInput = document.getElementById("customCountInput");
+const customUnitSelect = document.getElementById("customUnitSelect");
 const recurrenceDaysEl = document.getElementById("recurrenceDays");
 const cancelTaskFormBtn = document.getElementById("cancelTaskFormBtn");
 const addTaskBtn = document.getElementById("addTaskBtn");
@@ -36,6 +42,11 @@ let allTasks = [];
 let supportsDueDate = true;
 let supportsRecurrence = true;
 const WEEKDAY_LABELS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+const RECURRENCE_CUSTOM_UNITS = [
+  { value: "day", singular: "jour", plural: "jours" },
+  { value: "week", singular: "semaine", plural: "semaines" },
+  { value: "month", singular: "mois", plural: "mois" },
+];
 
 const SUPABASE_URL = "https://pikgsutwilxhblphynax.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpa2dzdXR3aWx4aGJscGh5bmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NjY1NDcsImV4cCI6MjA4NzI0MjU0N30.gCPo21F6gpAGokux0CfgR_JDNHBr8vGOtiFdF6mQ4qY";
@@ -172,7 +183,12 @@ function isDueInputExpanded() {
 }
 
 function updateDueInputVisibility() {
-  if (!taskDueFields || !taskDueInput || !toggleDueInputBtn) {
+  if (!taskDueFields || !taskDueInput) {
+    return;
+  }
+
+  if (!toggleDueInputBtn) {
+    taskDueFields.hidden = false;
     return;
   }
 
@@ -209,14 +225,21 @@ function openDueDatePicker() {
 }
 
 function openDueTimePicker() {
-  if (!dueTimeOverlay || !wheelHourSelect || !wheelMinuteSelect || !taskDueTimeInput) {
+  if (!dueTimeOverlay || !taskDueTimeInput) {
     return;
   }
   const [hours = "09", minutes = "00"] = (taskDueTimeInput.value || "09:00").split(":");
-  wheelHourSelect.value = hours;
-  wheelMinuteSelect.value = minutes;
+  if (dueTimeTextInput) {
+    dueTimeTextInput.value = `${pad2(Number(hours))}:${pad2(Number(minutes))}`;
+  }
   dueTimeOverlay.hidden = false;
-  wheelHourSelect.focus();
+  if (dueTimeErrorEl) {
+    dueTimeErrorEl.textContent = "";
+  }
+  if (dueTimeTextInput) {
+    dueTimeTextInput.focus();
+    dueTimeTextInput.select();
+  }
 }
 
 function closeDueTimePicker() {
@@ -224,6 +247,9 @@ function closeDueTimePicker() {
     return false;
   }
   dueTimeOverlay.hidden = true;
+  if (dueTimeErrorEl) {
+    dueTimeErrorEl.textContent = "";
+  }
   return true;
 }
 
@@ -239,45 +265,121 @@ function setDueTimeValue(value) {
   taskDueTimeWheelBtn.textContent = value;
 }
 
+function formatDueDateLabel(value) {
+  const match = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) {
+    return "";
+  }
+  return `${match[3]}/${match[2]}/${match[1]}`;
+}
+
+function updateDueDateButtonLabel() {
+  if (!taskDueDateBtn || !taskDueInput) {
+    return;
+  }
+
+  const formatted = formatDueDateLabel(taskDueInput.value);
+  if (!formatted) {
+    taskDueDateBtn.innerHTML = `<i class="bi bi-calendar3" aria-hidden="true"></i>`;
+    taskDueDateBtn.title = "Choisir une date";
+    return;
+  }
+
+  taskDueDateBtn.textContent = formatted;
+  taskDueDateBtn.title = `Date selectionnee: ${formatted}`;
+}
+
 function pad2(value) {
   return String(value).padStart(2, "0");
 }
 
-function initDueTimeWheel() {
-  if (!wheelHourSelect || !wheelMinuteSelect) {
+function parseTimeNumberInput(value, max) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return 0;
+  }
+  if (parsed < 0) {
+    return 0;
+  }
+  if (parsed > max) {
+    return max;
+  }
+  return Math.floor(parsed);
+}
+
+function parseDueTimeTextInput(value) {
+  const trimmed = value.trim();
+  const match = trimmed.match(/^(\d{1,2})\s*:\s*(\d{1,2})$/);
+  if (!match) {
+    return null;
+  }
+  const hour = parseTimeNumberInput(match[1], 23);
+  const minute = parseTimeNumberInput(match[2], 59);
+  if (Number(match[1]) > 23 || Number(match[2]) > 59) {
+    return null;
+  }
+  return `${pad2(hour)}:${pad2(minute)}`;
+}
+
+function formatDueTimeTyping(value) {
+  const digits = value.replace(/\D/g, "").slice(0, 4);
+  if (digits.length <= 2) {
+    return digits;
+  }
+  return `${digits.slice(0, 2)}:${digits.slice(2)}`;
+}
+
+function getCustomUnitIndex(value) {
+  return RECURRENCE_CUSTOM_UNITS.findIndex((unit) => unit.value === value);
+}
+
+function getCustomCountValue() {
+  const parsed = Number(customCountInput?.value || "1");
+  if (!Number.isFinite(parsed)) {
+    return 1;
+  }
+  return Math.max(1, Math.min(30, Math.floor(parsed)));
+}
+
+function getCustomUnitValue() {
+  const current = customUnitSelect?.value || "day";
+  return getCustomUnitIndex(current) >= 0 ? current : "day";
+}
+
+function setCustomCountValue(value) {
+  if (!customCountInput) {
     return;
   }
+  const safeValue = Math.max(1, Math.min(30, Math.floor(value)));
+  customCountInput.value = String(safeValue);
+}
 
-  if (!wheelHourSelect.options.length) {
-    for (let hour = 0; hour < 24; hour += 1) {
-      const option = document.createElement("option");
-      option.value = pad2(hour);
-      option.textContent = pad2(hour);
-      wheelHourSelect.appendChild(option);
-    }
+function setCustomUnitValue(value) {
+  if (!customUnitSelect) {
+    return;
   }
-
-  if (!wheelMinuteSelect.options.length) {
-    for (let minute = 0; minute < 60; minute += 1) {
-      const option = document.createElement("option");
-      option.value = pad2(minute);
-      option.textContent = pad2(minute);
-      wheelMinuteSelect.appendChild(option);
-    }
-  }
+  const index = getCustomUnitIndex(value);
+  const safeUnit = index >= 0 ? RECURRENCE_CUSTOM_UNITS[index] : RECURRENCE_CUSTOM_UNITS[0];
+  customUnitSelect.value = safeUnit.value;
 }
 
 function parseRecurrenceRule(rule) {
   if (!rule) {
-    return { type: "", days: [] };
+    return { type: "", days: [], intervalCount: 1, intervalUnit: "day" };
   }
 
   if (rule === "daily" || rule === "monthly" || rule === "weekly") {
-    return { type: rule, days: [] };
+    return { type: rule, days: [], intervalCount: 1, intervalUnit: "day" };
+  }
+
+  const intervalMatch = rule.match(/^interval:(\d+):(day|week|month)$/);
+  if (intervalMatch) {
+    const intervalCount = Math.max(1, Number(intervalMatch[1]));
+    return { type: "interval", days: [], intervalCount, intervalUnit: intervalMatch[2] };
   }
 
   if (!rule.startsWith("weekly:")) {
-    return { type: "", days: [] };
+    return { type: "", days: [], intervalCount: 1, intervalUnit: "day" };
   }
 
   const dayList = rule
@@ -286,7 +388,7 @@ function parseRecurrenceRule(rule) {
     .map((v) => Number(v))
     .filter((v) => Number.isInteger(v) && v >= 0 && v <= 6);
   const uniqueSorted = Array.from(new Set(dayList)).sort((a, b) => a - b);
-  return { type: "weekly", days: uniqueSorted };
+  return { type: "weekly", days: uniqueSorted, intervalCount: 1, intervalUnit: "day" };
 }
 
 function getRecurrenceLabel(recurrenceRule) {
@@ -304,6 +406,11 @@ function getRecurrenceLabel(recurrenceRule) {
     const labels = parsed.days.map((day) => WEEKDAY_LABELS[day]).join(", ");
     return `Hebdo: ${labels}`;
   }
+  if (parsed.type === "interval") {
+    const unit = RECURRENCE_CUSTOM_UNITS.find((entry) => entry.value === parsed.intervalUnit) || RECURRENCE_CUSTOM_UNITS[0];
+    const label = parsed.intervalCount > 1 ? unit.plural : unit.singular;
+    return `Tous les ${parsed.intervalCount} ${label}`;
+  }
   return "";
 }
 
@@ -319,7 +426,12 @@ function getWeeklyDaySelection() {
 
 function getRecurrenceRuleFromForm() {
   const selected = taskRecurrenceInput?.value || "";
-  if (selected !== "weekly") {
+  if (selected === "custom") {
+    const count = getCustomCountValue();
+    const unit = getCustomUnitValue();
+    return `interval:${count}:${unit}`;
+  }
+  if (selected !== "weekly_days") {
     return selected;
   }
   const days = getWeeklyDaySelection();
@@ -330,11 +442,14 @@ function getRecurrenceRuleFromForm() {
 }
 
 function updateRecurrenceDaysVisibility() {
-  if (!recurrenceDaysEl) {
+  if (!recurrenceDaysEl || !recurrenceCustomEl) {
     return;
   }
-  const isWeekly = taskRecurrenceInput?.value === "weekly";
-  recurrenceDaysEl.hidden = !isWeekly;
+  const recurrenceType = taskRecurrenceInput?.value || "";
+  const isWeeklyDays = recurrenceType === "weekly_days";
+  const isCustom = recurrenceType === "custom";
+  recurrenceDaysEl.hidden = !isWeeklyDays;
+  recurrenceCustomEl.hidden = !isCustom;
 }
 
 function setRecurrenceInputExpanded(expanded) {
@@ -352,7 +467,12 @@ function isRecurrenceInputExpanded() {
 }
 
 function updateRecurrenceInputVisibility() {
-  if (!taskRecurrenceInput || !toggleRecurrenceInputBtn) {
+  if (!taskRecurrenceInput) {
+    return;
+  }
+
+  if (!toggleRecurrenceInputBtn) {
+    taskRecurrenceInput.hidden = false;
     return;
   }
 
@@ -406,6 +526,23 @@ function getNextDueAtIso(currentDueAt, recurrenceRule) {
   if (parsed.type === "monthly") {
     baseDate.setMonth(baseDate.getMonth() + 1);
     return baseDate.toISOString();
+  }
+
+  if (parsed.type === "interval") {
+    const interval = Math.max(1, parsed.intervalCount || 1);
+    if (parsed.intervalUnit === "day") {
+      baseDate.setDate(baseDate.getDate() + interval);
+      return baseDate.toISOString();
+    }
+    if (parsed.intervalUnit === "week") {
+      baseDate.setDate(baseDate.getDate() + interval * 7);
+      return baseDate.toISOString();
+    }
+    if (parsed.intervalUnit === "month") {
+      baseDate.setMonth(baseDate.getMonth() + interval);
+      return baseDate.toISOString();
+    }
+    return null;
   }
 
   if (parsed.type !== "weekly") {
@@ -799,7 +936,10 @@ function resetTaskForm() {
     return;
   }
   taskFormEl.reset();
+  updateDueDateButtonLabel();
   setDueTimeValue("09:00");
+  setCustomCountValue(1);
+  setCustomUnitValue("day");
   closeDueTimePicker();
   setDueInputExpanded(false);
   updateDueInputVisibility();
@@ -817,7 +957,7 @@ function openTaskForm() {
   if (!taskFormOverlay || !taskFormEl || !taskTitleInput) {
     return;
   }
-  initDueTimeWheel();
+  updateDueDateButtonLabel();
   setDueTimeValue(getDueTimeValue());
   setDueInputExpanded(false);
   updateDueInputVisibility();
@@ -1268,11 +1408,51 @@ if (toggleDueInputBtn && taskDueInput) {
     updateDueInputVisibility();
     openDueDatePicker();
   });
+}
 
-  taskDueInput.addEventListener("input", () => {
+if (taskDueInput) {
+  const handleDueDateValueChange = () => {
     setDueInputExpanded(taskDueInput.value.trim().length > 0);
     updateDueInputVisibility();
-    if (taskDueInput.value.trim().length > 0) {
+    updateDueDateButtonLabel();
+  };
+  taskDueInput.addEventListener("input", handleDueDateValueChange);
+  taskDueInput.addEventListener("change", handleDueDateValueChange);
+}
+
+if (taskDueDateBtn) {
+  taskDueDateBtn.addEventListener("click", () => {
+    openDueDatePicker();
+  });
+}
+
+if (taskDateCard) {
+  taskDateCard.addEventListener("click", (event) => {
+    const target = event.target;
+    if (target instanceof Element && target.closest("#taskDueDateBtn")) {
+      return;
+    }
+    openDueDatePicker();
+  });
+  taskDateCard.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openDueDatePicker();
+    }
+  });
+}
+
+if (taskTimeCard) {
+  taskTimeCard.addEventListener("click", (event) => {
+    const target = event.target;
+    if (target instanceof Element && target.closest("#taskDueTimeWheelBtn")) {
+      return;
+    }
+    openDueTimePicker();
+  });
+  taskTimeCard.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
       openDueTimePicker();
     }
   });
@@ -1292,12 +1472,30 @@ if (cancelDueTimeBtn) {
   });
 }
 
-if (confirmDueTimeBtn && wheelHourSelect && wheelMinuteSelect) {
+if (confirmDueTimeBtn) {
   confirmDueTimeBtn.addEventListener("click", () => {
-    const hour = wheelHourSelect.value || "09";
-    const minute = wheelMinuteSelect.value || "00";
-    setDueTimeValue(`${hour}:${minute}`);
+    const parsedTime = parseDueTimeTextInput(dueTimeTextInput?.value ?? "");
+    if (!parsedTime) {
+      if (dueTimeErrorEl) {
+        dueTimeErrorEl.textContent = "Heure invalide. Utilisez HH:MM (ex: 09:00).";
+      }
+      dueTimeTextInput?.focus();
+      return;
+    }
+    if (dueTimeErrorEl) {
+      dueTimeErrorEl.textContent = "";
+    }
+    setDueTimeValue(parsedTime);
     closeDueTimePicker();
+  });
+}
+
+if (dueTimeTextInput) {
+  dueTimeTextInput.addEventListener("input", () => {
+    dueTimeTextInput.value = formatDueTimeTyping(dueTimeTextInput.value);
+    if (dueTimeErrorEl) {
+      dueTimeErrorEl.textContent = "";
+    }
   });
 }
 
@@ -1314,6 +1512,27 @@ if (taskRecurrenceInput) {
     setRecurrenceInputExpanded(taskRecurrenceInput.value.trim().length > 0);
     updateRecurrenceInputVisibility();
     updateRecurrenceDaysVisibility();
+  });
+}
+
+if (customCountInput) {
+  customCountInput.addEventListener("focus", () => {
+    if (customCountInput.value === "1") {
+      customCountInput.value = "";
+    }
+  });
+
+  customCountInput.addEventListener("input", () => {
+    if (!customCountInput.value.trim()) {
+      return;
+    }
+    setCustomCountValue(getCustomCountValue());
+  });
+
+  customCountInput.addEventListener("blur", () => {
+    if (!customCountInput.value.trim()) {
+      setCustomCountValue(1);
+    }
   });
 }
 
@@ -1372,12 +1591,15 @@ if (toggleHistoryBtn) {
 
 setAddTaskEnabled(false);
 applyFilterButtonState();
-initDueTimeWheel();
+updateDueDateButtonLabel();
 setDueTimeValue(getDueTimeValue());
+setCustomCountValue(1);
+setCustomUnitValue("day");
 setDueInputExpanded(false);
 updateDueInputVisibility();
 setRecurrenceInputExpanded(false);
 updateRecurrenceInputVisibility();
+updateRecurrenceDaysVisibility();
 resetTaskList("Connectez-vous pour voir vos taches.");
 void initSupabase();
 

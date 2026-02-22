@@ -431,7 +431,7 @@ input:disabled {
 
 .task-form {
   display: grid;
-  gap: 0.55rem;
+  gap: 0.85rem;
 }
 
 .task-form label {
@@ -439,84 +439,170 @@ input:disabled {
   color: #cbd5e1;
 }
 
-.task-form-shortcuts {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.55rem;
+.task-form-main {
+  display: grid;
+  gap: 0.45rem;
 }
 
-.task-due-picker {
+.task-form-panels {
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: 1fr;
+}
+
+.task-panel-block {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.task-recurrence-group {
   display: grid;
   gap: 0.55rem;
 }
 
-.task-due-fields {
+.task-panel-label {
+  margin: 0;
+  font-size: 0.86rem;
+  color: #cbd5e1;
+  font-weight: 400;
+}
+
+.task-form-panel {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  background: #0f172a;
+  padding: 0.6rem;
+}
+
+.task-due-fields-inline {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.task-due-field {
+  display: grid;
+  gap: 0.45rem;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.task-due-field:focus-visible {
+  outline: 2px solid #22c55e;
+  outline-offset: 2px;
+}
+
+.task-due-time-btn {
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #475569;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+#taskDueInput {
+  min-height: 2.5rem;
+}
+
+#taskDueInput,
+.task-due-time-btn {
+  box-sizing: border-box;
+  line-height: 1.2;
+}
+
+.task-due-date-btn {
+  width: 100%;
+  min-width: 0;
+  height: 2.5rem;
+  padding: 0;
+  border: 1px solid #475569;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+.task-due-date-btn .bi {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.task-due-native-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.task-due-field label {
+  font-size: 0.86rem;
+  color: #cbd5e1;
+}
+
+.due-time-modal {
+  max-width: 260px;
+}
+
+.time-input-wrap {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin: 0.35rem 0 0.75rem;
+}
+
+.time-single-input {
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+  padding: 0.55rem 0.2rem;
+}
+
+.time-input-error {
+  margin: -0.35rem 0 0.35rem;
+  min-height: 1.1rem;
+  font-size: 0.82rem;
+  color: #fca5a5;
+}
+
+#taskRecurrenceInput {
+  width: 100%;
+}
+
+.recurrence-custom {
+  display: grid;
+  grid-template-columns: auto minmax(0, 4.5rem) minmax(0, 1fr);
   gap: 0.5rem;
   align-items: center;
 }
 
-.task-due-time-btn {
-  min-width: 5.25rem;
-  text-align: center;
-  padding: 0.45rem 0.5rem;
+.recurrence-custom[hidden] {
+  display: none !important;
 }
 
-.due-time-modal {
-  max-width: 320px;
-}
-
-.time-wheel-wrap {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 0.4rem;
-  margin: 0.5rem 0 0.75rem;
-}
-
-.time-wheel-select {
-  width: 100%;
-  height: 9.5rem;
-  padding: 0.25rem;
-  text-align: center;
-  font-size: 1.1rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.time-wheel-sep {
-  font-size: 1.4rem;
-  font-weight: 700;
+.recurrence-custom-prefix {
+  font-size: 0.86rem;
   color: #cbd5e1;
 }
 
-.task-recurrence-picker {
-  display: grid;
-  gap: 0.55rem;
+.recurrence-custom-count {
+  text-align: center;
 }
 
-.task-due-toggle {
-  width: 2.25rem;
-  min-width: 2.25rem;
-  height: 2.25rem;
-  padding: 0;
-}
-
-.task-due-toggle .bi {
-  font-size: 1rem;
-  line-height: 1;
-}
-
-.task-recurrence-toggle {
-  width: 2.25rem;
-  min-width: 2.25rem;
-  height: 2.25rem;
-  padding: 0;
-}
-
-.task-recurrence-toggle .bi {
-  font-size: 1rem;
-  line-height: 1;
+.recurrence-custom-unit {
+  width: 100%;
 }
 
 .task-form-actions {
@@ -530,6 +616,10 @@ input:disabled {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 0.35rem;
+}
+
+.recurrence-days[hidden] {
+  display: none !important;
 }
 
 .recurrence-day-btn {

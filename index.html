@@ -124,60 +124,75 @@
       <div class="auth-modal task-form-modal" role="dialog" aria-modal="true" aria-labelledby="taskFormTitle">
         <h2 id="taskFormTitle">Nouvelle tache</h2>
         <form id="taskForm" class="task-form">
-          <label for="taskTitleInput">Titre</label>
-          <input id="taskTitleInput" name="title" type="text" autocomplete="off" required />
+          <div class="task-form-main">
+            <label for="taskTitleInput">Titre</label>
+            <input id="taskTitleInput" name="title" type="text" autocomplete="off" required />
+          </div>
 
-          <div class="task-form-shortcuts">
-            <div class="task-due-picker">
-              <button
-                id="toggleDueInputBtn"
-                type="button"
-                class="secondary icon-btn task-due-toggle"
-                aria-label="Ajouter une echeance"
-                title="Ajouter une echeance"
-              >
-                <i class="bi bi-calendar3" aria-hidden="true"></i>
-              </button>
-              <div id="taskDueFields" class="task-due-fields" hidden>
-                <input id="taskDueInput" name="due_date" type="date" />
-                <button
-                  id="taskDueTimeWheelBtn"
-                  type="button"
-                  class="secondary task-due-time-btn"
-                  aria-label="Choisir l'heure"
-                >
-                  09:00
-                </button>
+          <div class="task-form-panels">
+            <div class="task-panel-block">
+              <div id="taskDueFields" class="task-due-fields-inline">
+                <div id="taskDateCard" class="task-due-field" role="button" tabindex="0" aria-label="Choisir une date">
+                  <label>Date</label>
+                  <button
+                    id="taskDueDateBtn"
+                    type="button"
+                    class="secondary icon-btn task-due-date-btn"
+                    aria-label="Choisir une date"
+                    title="Choisir une date"
+                  >
+                    <i class="bi bi-calendar3" aria-hidden="true"></i>
+                  </button>
+                </div>
+
+                <div id="taskTimeCard" class="task-due-field" role="button" tabindex="0" aria-label="Choisir l'heure">
+                  <label>Heure</label>
+                  <button
+                    id="taskDueTimeWheelBtn"
+                    type="button"
+                    class="secondary task-due-time-btn"
+                    aria-label="Choisir l'heure"
+                  >
+                    09:00
+                  </button>
+                </div>
+
+                <input id="taskDueInput" class="task-due-native-input" name="due_date" type="date" aria-hidden="true" tabindex="-1" />
                 <input id="taskDueTimeInput" name="due_time" type="hidden" value="09:00" />
               </div>
             </div>
 
-            <div class="task-recurrence-picker">
-              <button
-                id="toggleRecurrenceInputBtn"
-                type="button"
-                class="secondary icon-btn task-recurrence-toggle"
-                aria-label="Ajouter une recurrence"
-                title="Ajouter une recurrence"
-              >
-                <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
-              </button>
-              <select id="taskRecurrenceInput" name="recurrence" hidden>
-                <option value="">Aucune</option>
-                <option value="daily">Quotidienne</option>
-                <option value="weekly">Hebdomadaire (jours)</option>
-                <option value="monthly">Mensuelle</option>
-              </select>
+            <div class="task-panel-block">
+              <p class="task-panel-label">Recurrence</p>
+              <div class="task-recurrence-group">
+                <select id="taskRecurrenceInput" name="recurrence">
+                  <option value="">Aucune</option>
+                  <option value="daily">Quotidienne</option>
+                  <option value="weekly">Hebdo</option>
+                  <option value="monthly">Mensuelle</option>
+                  <option value="weekly_days">Choisir les jours de la semaine</option>
+                  <option value="custom">Personnalisee</option>
+                </select>
+                <div id="recurrenceCustom" class="recurrence-custom" hidden>
+                  <span class="recurrence-custom-prefix">Tous les</span>
+                  <input id="customCountInput" class="recurrence-custom-count" type="number" min="1" max="30" step="1" value="1" aria-label="Nombre" />
+                  <select id="customUnitSelect" class="recurrence-custom-unit" aria-label="Temporalite">
+                    <option value="day">jours</option>
+                    <option value="week">semaines</option>
+                    <option value="month">mois</option>
+                  </select>
+                </div>
+                <div id="recurrenceDays" class="recurrence-days" hidden>
+                  <button type="button" class="secondary recurrence-day-btn" data-day="1" aria-pressed="false">L</button>
+                  <button type="button" class="secondary recurrence-day-btn" data-day="2" aria-pressed="false">M</button>
+                  <button type="button" class="secondary recurrence-day-btn" data-day="3" aria-pressed="false">M</button>
+                  <button type="button" class="secondary recurrence-day-btn" data-day="4" aria-pressed="false">J</button>
+                  <button type="button" class="secondary recurrence-day-btn" data-day="5" aria-pressed="false">V</button>
+                  <button type="button" class="secondary recurrence-day-btn" data-day="6" aria-pressed="false">S</button>
+                  <button type="button" class="secondary recurrence-day-btn" data-day="0" aria-pressed="false">D</button>
+                </div>
+              </div>
             </div>
-          </div>
-          <div id="recurrenceDays" class="recurrence-days" hidden>
-            <button type="button" class="secondary recurrence-day-btn" data-day="1" aria-pressed="false">L</button>
-            <button type="button" class="secondary recurrence-day-btn" data-day="2" aria-pressed="false">M</button>
-            <button type="button" class="secondary recurrence-day-btn" data-day="3" aria-pressed="false">M</button>
-            <button type="button" class="secondary recurrence-day-btn" data-day="4" aria-pressed="false">J</button>
-            <button type="button" class="secondary recurrence-day-btn" data-day="5" aria-pressed="false">V</button>
-            <button type="button" class="secondary recurrence-day-btn" data-day="6" aria-pressed="false">S</button>
-            <button type="button" class="secondary recurrence-day-btn" data-day="0" aria-pressed="false">D</button>
           </div>
 
           <div class="task-form-actions">
@@ -191,11 +206,19 @@
     <div id="dueTimeOverlay" class="auth-overlay" hidden>
       <div class="auth-modal due-time-modal" role="dialog" aria-modal="true" aria-labelledby="dueTimeTitle">
         <h2 id="dueTimeTitle">Heure</h2>
-        <div class="time-wheel-wrap">
-          <select id="wheelHourSelect" class="time-wheel-select" size="5" aria-label="Heures"></select>
-          <div class="time-wheel-sep">:</div>
-          <select id="wheelMinuteSelect" class="time-wheel-select" size="5" aria-label="Minutes"></select>
+        <div class="time-input-wrap" aria-label="Selecteur d'heure">
+          <input
+            id="dueTimeTextInput"
+            class="time-single-input"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            placeholder="09:00"
+            value="09:00"
+            aria-label="Heure (HH:MM)"
+          />
         </div>
+        <p id="dueTimeError" class="time-input-error" aria-live="polite"></p>
         <div class="task-form-actions">
           <button id="cancelDueTimeBtn" type="button" class="secondary">Annuler</button>
           <button id="confirmDueTimeBtn" type="button">Valider</button>
