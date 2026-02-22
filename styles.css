@@ -1,7 +1,7 @@
 :root {
   color-scheme: light dark;
   font-family: Inter, system-ui, sans-serif;
-  --action-btn-size: clamp(2rem, 2.6vw, 2.6rem);
+  --action-btn-size: clamp(1.75rem, 2.6vw, 2.6rem);
   --task-row-height: clamp(2.25rem, 2.6vw, 3rem);
   --task-title-size: clamp(0.95rem, 1.2vw, 1.2rem);
 }
@@ -17,6 +17,7 @@ body {
   max-width: none;
   margin: 2rem auto;
   padding: 0 1rem 2rem;
+  box-sizing: border-box;
 }
 
 .task-workspace {
@@ -29,12 +30,15 @@ body {
   justify-content: space-between;
   gap: 0.75rem;
   margin-bottom: 0.75rem;
+  min-width: 0;
 }
 
 .section-head h2 {
+  flex: 1 1 auto;
+  min-width: 0;
   margin: 0;
   white-space: nowrap;
-  font-size: var(--action-btn-size);
+  font-size: clamp(0.95rem, 2.3vw, var(--action-btn-size));
   line-height: 1.1;
 }
 
@@ -42,6 +46,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex: 0 0 auto;
 }
 
 .section-actions > .settings-trigger,
