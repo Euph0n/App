@@ -1,6 +1,6 @@
-const CACHE_VERSION = "v3";
-const CACHE_NAME = `taskflow-cache-${CACHE_VERSION}`;
-const ASSETS = ["./", "./index.html", "./styles.css", "./app.js", "./manifest.webmanifest", "./icon.svg"];
+const CACHE_NAME = "taskflow-cache";
+const LEGACY_CACHE_PREFIX = "taskflow-cache-";
+const ASSETS = ["./", "./index.html", "./app.js", "./manifest.webmanifest", "./icon.svg"];
 const NETWORK_FIRST_DESTINATIONS = new Set(["script", "style", "worker", "document"]);
 
 self.addEventListener("install", (event) => {
@@ -17,7 +17,10 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((keys) =>
       Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME) {
+          const isLegacyVersionedCache =
+            key.startsWith(LEGACY_CACHE_PREFIX) && key !== CACHE_NAME;
+
+          if (isLegacyVersionedCache) {
             return caches.delete(key);
           }
           return Promise.resolve();
