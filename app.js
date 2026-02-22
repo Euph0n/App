@@ -61,6 +61,32 @@ function formatDate(value) {
   return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
 
+function formatDueDuration(value) {
+  const dueMs = new Date(value).getTime();
+  if (Number.isNaN(dueMs)) {
+    return "";
+  }
+
+  const diffMs = dueMs - Date.now();
+  const isOverdue = diffMs < 0;
+  const absMinutes = Math.max(1, Math.round(Math.abs(diffMs) / 60000));
+
+  const days = Math.floor(absMinutes / 1440);
+  const hours = Math.floor(absMinutes / 60);
+  const minutes = absMinutes;
+
+  let duration = "";
+  if (days > 0) {
+    duration = `${days}j`;
+  } else if (hours > 0) {
+    duration = `${hours}h`;
+  } else {
+    duration = `${minutes}m`;
+  }
+
+  return duration;
+}
+
 function parseDueDateInput(input) {
   const trimmed = input.trim();
   if (!trimmed) {
@@ -241,12 +267,43 @@ function renderTask(task) {
   title.textContent = task.title;
   mainRow.appendChild(title);
 
+  const rightMeta = document.createElement("div");
+  rightMeta.className = "task-right-meta";
+
+  if (task.due_at) {
+    const dueInline = document.createElement("span");
+    dueInline.className = "task-due-inline";
+    const dueMs = new Date(task.due_at).getTime();
+    if (!Number.isNaN(dueMs) && dueMs < Date.now()) {
+      dueInline.classList.add("task-due-overdue");
+    }
+    dueInline.title = `Echeance: ${formatDate(task.due_at)}`;
+    dueInline.innerHTML = `
+      <svg
+        class="task-due-icon"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="14"
+        height="14"
+        aria-hidden="true"
+      >
+        <path
+          fill="currentColor"
+          d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 10.59 3.3 3.3a1 1 0 0 1-1.42 1.41l-3.59-3.58A1 1 0 0 1 11 13V7a1 1 0 0 1 2 0z"
+        />
+      </svg>
+      <span>${formatDueDuration(task.due_at)}</span>
+    `;
+    rightMeta.appendChild(dueInline);
+  }
+
   const detailsToggleBtn = document.createElement("button");
   detailsToggleBtn.type = "button";
   detailsToggleBtn.className = "icon-btn task-details-btn";
   detailsToggleBtn.setAttribute("aria-controls", detailsId);
   setDetailsToggleState(detailsToggleBtn, false);
-  mainRow.appendChild(detailsToggleBtn);
+  rightMeta.appendChild(detailsToggleBtn);
+  mainRow.appendChild(rightMeta);
   item.appendChild(mainRow);
 
   const detailsPanel = document.createElement("div");
@@ -295,9 +352,14 @@ function renderFilteredTasks() {
     return true;
     })
     .sort((a, b) => {
-      const rankA = a.status === "pending" ? 0 : 1;
-      const rankB = b.status === "pending" ? 0 : 1;
-      return rankA - rankB;
+      const dueA = a.due_at ? new Date(a.due_at).getTime() : Number.POSITIVE_INFINITY;
+      const dueB = b.due_at ? new Date(b.due_at).getTime() : Number.POSITIVE_INFINITY;
+      if (dueA !== dueB) {
+        return dueA - dueB;
+      }
+      const createdA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const createdB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return createdB - createdA;
     });
 
   filtered.forEach((task) => taskListEl.appendChild(renderTask(task)));

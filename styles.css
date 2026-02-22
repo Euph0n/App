@@ -166,13 +166,14 @@ input:disabled {
 .task-item-main {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 0.6rem;
   min-height: var(--task-row-height);
   padding: 0 0.75rem;
 }
 
 .task-title {
+  min-width: 0;
   font-size: var(--task-title-size);
   font-weight: 600;
   color: #f8fafc;
@@ -180,6 +181,44 @@ input:disabled {
   overflow-wrap: anywhere;
   position: relative;
   top: -1px;
+}
+
+.task-due-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.25rem;
+  flex: 0 0 auto;
+  width: 6ch;
+  min-width: 6ch;
+  font-size: 0.78rem;
+  line-height: 1;
+  color: #94a3b8;
+  text-align: left;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.task-due-overdue {
+  color: #f87171;
+}
+
+.task-due-icon {
+  display: block;
+  width: 0.82rem;
+  height: 0.82rem;
+  flex: 0 0 auto;
+}
+
+.task-right-meta {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.05rem;
+  width: calc(6ch + 1.4rem + 0.05rem);
+  min-width: calc(6ch + 1.4rem + 0.05rem);
+  flex: 0 0 auto;
 }
 
 .task-title-done {
@@ -190,6 +229,7 @@ input:disabled {
 }
 
 .task-details-btn {
+  margin-left: auto;
   flex: 0 0 auto;
   background: transparent;
   border: 0;
