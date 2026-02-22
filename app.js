@@ -3,6 +3,7 @@ const authStateEl = document.getElementById("authState");
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const installBtn = document.getElementById("installBtn");
+const authDialog = document.getElementById("authDialog");
 const taskForm = document.getElementById("taskForm");
 const taskInput = document.getElementById("taskInput");
 const pendingTasksEl = document.getElementById("pendingTasks");
@@ -63,6 +64,20 @@ function renderTask(task, history = false) {
 
 function authDbHint(operation) {
   return `${operation}: verifiez que la table tasks contient user_id (uuid) et que les policies RLS sont configurees pour auth.uid().`;
+}
+
+function showAuthDialog() {
+  if (!authDialog || authDialog.open) {
+    return;
+  }
+  authDialog.showModal();
+}
+
+function closeAuthDialog() {
+  if (!authDialog || !authDialog.open) {
+    return;
+  }
+  authDialog.close();
 }
 
 async function fetchTasks() {
@@ -171,18 +186,18 @@ async function handleSession(session) {
 
   if (!currentUser) {
     authStateEl.textContent = "Non connecte.";
-    loginBtn.hidden = false;
     logoutBtn.hidden = true;
     setTaskInputEnabled(false);
     resetTaskLists("Connectez-vous pour voir vos taches.");
+    showAuthDialog();
     return;
   }
 
   const identity = currentUser.email || currentUser.user_metadata?.full_name || currentUser.id;
   authStateEl.textContent = `Connecte: ${identity}`;
-  loginBtn.hidden = true;
   logoutBtn.hidden = false;
   setTaskInputEnabled(true);
+  closeAuthDialog();
 
   await fetchTasks();
 }
@@ -276,6 +291,12 @@ taskForm.addEventListener("submit", async (event) => {
 setTaskInputEnabled(false);
 resetTaskLists("Connectez-vous pour voir vos taches.");
 void initSupabase();
+
+if (authDialog) {
+  authDialog.addEventListener("cancel", (event) => {
+    event.preventDefault();
+  });
+}
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {

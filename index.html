@@ -18,7 +18,6 @@
         <div class="topbar">
           <h1>Gestionnaire de taches</h1>
           <div class="auth-row compact">
-          <button id="loginBtn" type="button">Se connecter avec Google</button>
             <button id="logoutBtn" type="button" class="secondary" hidden>Deconnexion</button>
             <button id="installBtn" type="button" class="secondary" hidden>Installer</button>
           </div>
@@ -52,6 +51,12 @@
 
       <p id="status" aria-live="polite"></p>
     </main>
+
+    <dialog id="authDialog" class="auth-dialog">
+      <h2>Connexion requise</h2>
+      <p>Connectez-vous avec Google pour utiliser l'application.</p>
+      <button id="loginBtn" type="button">Se connecter avec Google</button>
+    </dialog>
 
     <script src="app.js"></script>
   </body>
